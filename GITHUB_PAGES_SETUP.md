@@ -23,6 +23,11 @@ In GitHub:
 
 After pushing to `main`, Pages deploys automatically.
 
+If deploy fails with `Get Pages site failed` / `Not Found`:
+- Confirm repository `Settings -> Actions -> General -> Workflow permissions` allows write permissions.
+- Re-run the workflow after the first Pages initialization.
+- The workflow uses `actions/configure-pages@v5` with `enablement: true` to auto-initialize Pages.
+
 ## 4) Open routes
 - `https://<username>.github.io/<repo>/` (entry)
 - `https://<username>.github.io/<repo>/teacher.html`
