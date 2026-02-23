@@ -8,8 +8,7 @@ import {
   remove,
   onDisconnect,
   onValue,
-  runTransaction,
-  serverTimestamp
+  runTransaction
 } from 'https://www.gstatic.com/firebasejs/10.12.4/firebase-database.js';
 import {
   getFirestore,
@@ -124,6 +123,24 @@ function withTimeout(promise, ms, timeoutMessage) {
         reject(e);
       });
   });
+}
+
+function wait(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function writeLatestSnapshotWithRetry(pathRef, payload, attempts) {
+  let lastErr = null;
+  for (let i = 0; i < attempts; i += 1) {
+    try {
+      await set(pathRef, payload);
+      return;
+    } catch (err) {
+      lastErr = err;
+      await wait(250 * (i + 1));
+    }
+  }
+  throw lastErr || new Error('Failed to write latest snapshot');
 }
 
 function parseJoinCode(raw) {
@@ -654,16 +671,16 @@ async function submitProposalSynced() {
     );
 
     const missionStatus = getMissionStatus(result);
-    await set(ref(db, `sessions/${teamCtx.sessionId}/latest/${teamCtx.teamId}`), {
+    await writeLatestSnapshotWithRetry(ref(db, `sessions/${teamCtx.sessionId}/latest/${teamCtx.teamId}`), {
       round: submitRound,
-      mv: result.mv,
+      mv: Number(result.mv || 0),
       scores: result.sc,
       status: missionStatus,
-      failDay: result.failDay,
-      failIdx: result.failIdx,
+      failDay: result.failDay ?? null,
+      failIdx: result.failIdx ?? null,
       teamId: teamCtx.teamId,
-      updatedAt: serverTimestamp()
-    });
+      updatedAt: Date.now()
+    }, 3);
 
     const chartId = `traj-chart-${Date.now()}`;
     const html = buildFeedback(result, submitRound, teamCtx.teamId, S.habitation, chartId);

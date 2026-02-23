@@ -34,9 +34,8 @@ const fs = getFirestore(app);
 const auth = getAuth(app);
 
 const { THRESH } = window.MarsSim;
-const TEACHER_PIN = 'ARES';
+const TEACHER_ACCESS_KEY = 'ares_teacher_access_granted_v1';
 
-let teacherUnlocked = false;
 let sessionId = 'lesson7';
 let sessionData = null;
 let teamsData = {};
@@ -95,7 +94,7 @@ function updateSessionUi() {
   el.className = `status-chip ${chip.cls}`;
   el.textContent = chip.text;
 
-  const controlsEnabled = teacherUnlocked && !invalidConfig;
+  const controlsEnabled = !invalidConfig;
   byId('start-session-btn').disabled = !controlsEnabled;
   byId('finish-session-btn').disabled = !controlsEnabled;
   byId('reset-session-btn').disabled = !controlsEnabled;
@@ -129,7 +128,7 @@ function getTotalOnlineCount() {
 function renderOnlinePill(teamId) {
   const count = getOnlineCountForTeam(teamId);
   const dot = `<span class="online-dot ${count > 0 ? 'on' : ''}"></span>`;
-  return `<span class="online-pill" data-team-id="${teamId}">${dot}<span>${count > 0 ? `${count} online` : 'offline'}</span></span>`;
+  return `<span class="online-pill" data-team-id="${teamId}">${dot}<span class="online-count">${count > 0 ? `${count} online` : 'offline'}</span></span>`;
 }
 
 function refreshPresencePills() {
@@ -144,43 +143,76 @@ function refreshPresencePills() {
   });
 }
 
+function formatClock(ts) {
+  const n = Number(ts || 0);
+  if (!Number.isFinite(n) || n <= 0) return '-';
+  const d = new Date(n);
+  if (Number.isNaN(d.getTime())) return '-';
+  return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+}
+
 function renderClassOverviewFromLatest() {
   const wrap = byId('class-overview-wrap');
-  const teams = Object.keys(latestData || {});
-  if (teams.length === 0) {
+  const teamIds = Array.from(new Set([
+    ...Object.keys(teamsData || {}),
+    ...Object.keys(latestData || {})
+  ])).sort();
+
+  if (teamIds.length === 0) {
     wrap.innerHTML = '<div class="note">No submissions yet — waiting for teams</div>';
     return;
   }
 
-  let html = `<table class="raw-table" style="min-width:820px"><thead><tr><th>TEAM ID</th><th>ONLINE</th><th>ROUND</th><th>MV SCORE</th><th>RS</th><th>ES</th><th>EP</th><th>BC</th><th>CS</th><th>STATUS</th><th>FAIL DAY</th></tr></thead><tbody>`;
+  let html = '<div class="note" style="margin-bottom:8px">Shows each team\'s latest synced proposal snapshot. Teams without a snapshot remain visible.</div>';
+  html += '<table class="raw-table" style="min-width:980px"><thead><tr><th>TEAM ID</th><th>ONLINE</th><th>SUBMITS</th><th>ROUND</th><th>MV SCORE</th><th>RS</th><th>ES</th><th>EP</th><th>BC</th><th>CS</th><th>STATUS</th><th>FAIL DAY</th><th>LAST UPDATE</th></tr></thead><tbody>';
 
-  const scoreCell = (scores, idx) => {
+  const scoreCell = (scores, idx, hasLatest) => {
+    if (!hasLatest) return '<span style="color:var(--text-3)">-</span>';
     const v = Number(scores?.[idx] ?? 0);
     const th = THRESH[idx];
     const col = v >= th ? 'var(--green)' : (v >= th - 0.5 ? 'var(--orange)' : 'var(--red)');
     return `<span style="color:${col};font-weight:700">${v.toFixed(2)}</span>`;
   };
 
-  teams.sort().forEach((teamId) => {
+  teamIds.forEach((teamId) => {
+    const team = teamsData?.[teamId] || {};
     const latest = latestData[teamId];
-    const mv = Number(latest.mv || 0);
+    const hasLatest = !!latest && typeof latest === 'object';
+    const submitCount = Number(team.submissionCount || 0);
+
+    const mv = Number(latest?.mv || 0);
     const mvCol = mv >= 3 ? 'var(--green)' : 'var(--red)';
-    const st = String(latest.status || 'CRITICAL').toUpperCase();
-    const stColor = st === 'VIABLE' ? 'var(--green)' : (st === 'NON-VIABLE' ? 'var(--red)' : 'var(--orange)');
-    const failDay = latest.failDay;
+
+    let st = 'NO SUBMISSION';
+    let stColor = 'var(--text-3)';
+    if (hasLatest) {
+      st = String(latest.status || 'CRITICAL').toUpperCase();
+      stColor = st === 'VIABLE' ? 'var(--green)' : (st === 'NON-VIABLE' ? 'var(--red)' : 'var(--orange)');
+    } else if (submitCount > 0) {
+      st = 'SYNC PENDING';
+      stColor = 'var(--orange)';
+    }
+
+    const failDay = latest?.failDay;
+    const roundVal = hasLatest
+      ? `V${latest.round || '-'}`
+      : (submitCount > 0 ? `V${Math.max(1, Number(team.currentRound || 1) - 1)}` : '-');
+    const updateTs = hasLatest ? latest.updatedAt : team.lastSubmissionAt;
 
     html += `<tr>
       <td class="val">${teamId}</td>
       <td>${renderOnlinePill(teamId).replace('online-pill', 'online-pill overview')}</td>
-      <td class="val">V${latest.round || '-'}</td>
-      <td class="val"><span style="color:${mvCol};font-weight:700">${mv.toFixed(2)}</span></td>
-      <td class="val">${scoreCell(latest.scores, 'RS')}</td>
-      <td class="val">${scoreCell(latest.scores, 'ES')}</td>
-      <td class="val">${scoreCell(latest.scores, 'EP')}</td>
-      <td class="val">${scoreCell(latest.scores, 'BC')}</td>
-      <td class="val">${scoreCell(latest.scores, 'CS')}</td>
+      <td class="val">${submitCount}</td>
+      <td class="val">${roundVal}</td>
+      <td class="val">${hasLatest ? `<span style="color:${mvCol};font-weight:700">${mv.toFixed(2)}</span>` : '<span style="color:var(--text-3)">-</span>'}</td>
+      <td class="val">${scoreCell(latest?.scores, 'RS', hasLatest)}</td>
+      <td class="val">${scoreCell(latest?.scores, 'ES', hasLatest)}</td>
+      <td class="val">${scoreCell(latest?.scores, 'EP', hasLatest)}</td>
+      <td class="val">${scoreCell(latest?.scores, 'BC', hasLatest)}</td>
+      <td class="val">${scoreCell(latest?.scores, 'CS', hasLatest)}</td>
       <td><span style="font-family:var(--font-mono);font-size:9px;color:${stColor};font-weight:700">${st}</span></td>
-      <td class="val" style="text-align:center">${failDay !== null && failDay !== undefined ? `<span style="color:var(--red);font-weight:700">${failDay}</span>` : '-'}</td>
+      <td class="val" style="text-align:center">${hasLatest && failDay !== null && failDay !== undefined ? `<span style="color:var(--red);font-weight:700">${failDay}</span>` : '-'}</td>
+      <td class="val">${formatClock(updateTs)}</td>
     </tr>`;
   });
 
@@ -251,11 +283,6 @@ function renderTeamRows() {
 }
 
 async function teacherUpsertTeam(teamId, budgetMu, joinCode, originalTeamId) {
-  if (!teacherUnlocked) {
-    showToast('Unlock teacher controls first', 'err');
-    return;
-  }
-
   const normalizedTeamId = String(teamId).trim().toUpperCase();
   const normalizedBudget = [11, 12, 13].includes(Number(budgetMu)) ? Number(budgetMu) : 12;
   const existing = teamsData[normalizedTeamId];
@@ -298,11 +325,6 @@ async function teacherUpsertTeam(teamId, budgetMu, joinCode, originalTeamId) {
 }
 
 async function teacherRemoveTeam(teamId) {
-  if (!teacherUnlocked) {
-    showToast('Unlock teacher controls first', 'err');
-    return;
-  }
-
   const tid = String(teamId || '').trim().toUpperCase();
   if (!tid) return;
 
@@ -319,11 +341,6 @@ async function teacherRemoveTeam(teamId) {
 }
 
 async function teacherStartSession() {
-  if (!teacherUnlocked) {
-    showToast('Unlock teacher controls first', 'err');
-    return;
-  }
-
   try {
     await update(ref(db, `sessions/${sessionId}`), {
       status: 'RUNNING',
@@ -339,11 +356,6 @@ async function teacherStartSession() {
 }
 
 async function teacherFinishSession() {
-  if (!teacherUnlocked) {
-    showToast('Unlock teacher controls first', 'err');
-    return;
-  }
-
   try {
     await update(ref(db, `sessions/${sessionId}`), {
       status: 'FINISHED',
@@ -357,11 +369,6 @@ async function teacherFinishSession() {
 }
 
 async function teacherResetSession() {
-  if (!teacherUnlocked) {
-    showToast('Unlock teacher controls first', 'err');
-    return;
-  }
-
   if (!window.confirm('Reset this session? Teams keep their join codes, but rounds/submissions are reset and latest overview is cleared.')) {
     return;
   }
@@ -409,6 +416,7 @@ function bindSessionListeners() {
   unsubs.push(onValue(ref(db, `sessions/${sessionId}/teams`), (snap) => {
     teamsData = snap.val() || {};
     renderTeamRows();
+    renderClassOverviewFromLatest();
     updateSessionUi();
   }, (error) => {
     showToast(formatFirebaseError(error, 'Failed to read teams'), 'err');
@@ -429,27 +437,15 @@ function bindSessionListeners() {
   }));
 }
 
-function unlockCheck() {
-  const pin = byId('pin-input').value;
-  teacherUnlocked = pin === TEACHER_PIN;
-  const statusEl = byId('pin-status');
-  statusEl.className = teacherUnlocked ? 'pin-status ok' : 'pin-status bad';
-  statusEl.textContent = teacherUnlocked ? 'UNLOCKED' : 'LOCKED';
-  updateSessionUi();
-}
-
-function maybeAutoUnlockFromQuery() {
-  const url = new URL(window.location.href);
-  const qPin = String(url.searchParams.get('pin') || '').trim().toUpperCase();
-  if (qPin !== TEACHER_PIN) return;
-  byId('pin-input').value = qPin;
-  teacherUnlocked = true;
-  const statusEl = byId('pin-status');
-  statusEl.className = 'pin-status ok';
-  statusEl.textContent = 'UNLOCKED';
-  updateSessionUi();
-  url.searchParams.delete('pin');
-  window.history.replaceState({}, '', url.pathname + (url.search ? url.search : '') + (url.hash || ''));
+function enforceEntryGate() {
+  try {
+    const hasAccess = sessionStorage.getItem(TEACHER_ACCESS_KEY) === '1';
+    if (hasAccess) return true;
+  } catch (_e) {
+    // Ignore storage access errors and fall through to redirect.
+  }
+  window.location.href = './index.html';
+  return false;
 }
 
 function connectSession() {
@@ -461,11 +457,6 @@ function connectSession() {
 }
 
 function bindEvents() {
-  byId('unlock-btn').addEventListener('click', unlockCheck);
-  byId('pin-input').addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') unlockCheck();
-  });
-
   byId('connect-session-btn').addEventListener('click', connectSession);
   byId('start-session-btn').addEventListener('click', teacherStartSession);
   byId('finish-session-btn').addEventListener('click', teacherFinishSession);
@@ -487,13 +478,13 @@ async function ensureSignedIn() {
 }
 
 function init() {
+  if (!enforceEntryGate()) return;
   if (invalidConfig) {
     byId('session-note').textContent = 'Firebase config is incomplete. Fill firebase.config.js before running.';
   }
   bindEvents();
   ensureSignedIn().then(() => {
     connectSession();
-    maybeAutoUnlockFromQuery();
     updateSessionUi();
   });
 }

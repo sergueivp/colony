@@ -32,6 +32,7 @@
   <script>
     (function () {
       const TEACHER_PIN = 'ARES';
+      const TEACHER_ACCESS_KEY = 'ares_teacher_access_granted_v1';
       const btn = document.getElementById('open-teacher-btn');
       btn.addEventListener('click', function () {
         const entered = window.prompt('Enter teacher PIN');
@@ -41,7 +42,12 @@
           window.alert('Incorrect PIN.');
           return;
         }
-        window.location.href = `./teacher.html?pin=${encodeURIComponent(normalized)}`;
+        try {
+          sessionStorage.setItem(TEACHER_ACCESS_KEY, '1');
+        } catch (_e) {
+          // Ignore storage failures; teacher page will redirect if not set.
+        }
+        window.location.href = './teacher.html';
       });
     })();
   </script>
