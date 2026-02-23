@@ -36,11 +36,12 @@
       btn.addEventListener('click', function () {
         const entered = window.prompt('Enter teacher PIN');
         if (entered === null) return;
-        if (String(entered).trim().toUpperCase() !== TEACHER_PIN) {
+        const normalized = String(entered).trim().toUpperCase();
+        if (normalized !== TEACHER_PIN) {
           window.alert('Incorrect PIN.');
           return;
         }
-        window.location.href = './teacher.html';
+        window.location.href = `./teacher.html?pin=${encodeURIComponent(normalized)}`;
       });
     })();
   </script>

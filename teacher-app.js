@@ -41,6 +41,7 @@ let sessionId = 'lesson7';
 let sessionData = null;
 let teamsData = {};
 let latestData = {};
+let presenceData = {};
 let unsubs = [];
 let manualRows = [];
 
@@ -106,7 +107,41 @@ function updateSessionUi() {
   }
 
   const teamCount = Object.keys(teamsData || {}).length;
-  byId('session-note').textContent = `Session: ${sessionId} • Status: ${status} • Teams: ${teamCount}`;
+  const onlineCount = getTotalOnlineCount();
+  byId('session-note').textContent = `Session: ${sessionId} • Status: ${status} • Teams: ${teamCount} • Online: ${onlineCount}`;
+}
+
+function getOnlineCountForTeam(teamId) {
+  const now = Date.now();
+  const ttl = 30000;
+  const teamPresence = presenceData?.[teamId];
+  if (!teamPresence || typeof teamPresence !== 'object') return 0;
+  return Object.values(teamPresence).filter((entry) => {
+    const lastSeen = Number(entry?.lastSeen || 0);
+    return lastSeen > 0 && now - lastSeen <= ttl;
+  }).length;
+}
+
+function getTotalOnlineCount() {
+  return Object.keys(presenceData || {}).reduce((sum, teamId) => sum + getOnlineCountForTeam(teamId), 0);
+}
+
+function renderOnlinePill(teamId) {
+  const count = getOnlineCountForTeam(teamId);
+  const dot = `<span class="online-dot ${count > 0 ? 'on' : ''}"></span>`;
+  return `<span class="online-pill" data-team-id="${teamId}">${dot}<span>${count > 0 ? `${count} online` : 'offline'}</span></span>`;
+}
+
+function refreshPresencePills() {
+  document.querySelectorAll('.online-pill[data-team-id]').forEach((el) => {
+    const teamId = el.getAttribute('data-team-id');
+    if (!teamId) return;
+    const count = getOnlineCountForTeam(teamId);
+    const dot = el.querySelector('.online-dot');
+    const text = el.querySelector('.online-count');
+    if (dot) dot.className = `online-dot ${count > 0 ? 'on' : ''}`;
+    if (text) text.textContent = count > 0 ? `${count} online` : 'offline';
+  });
 }
 
 function renderClassOverviewFromLatest() {
@@ -117,7 +152,7 @@ function renderClassOverviewFromLatest() {
     return;
   }
 
-  let html = `<table class="raw-table" style="min-width:760px"><thead><tr><th>TEAM ID</th><th>ROUND</th><th>MV SCORE</th><th>RS</th><th>ES</th><th>EP</th><th>BC</th><th>CS</th><th>STATUS</th><th>FAIL DAY</th></tr></thead><tbody>`;
+  let html = `<table class="raw-table" style="min-width:820px"><thead><tr><th>TEAM ID</th><th>ONLINE</th><th>ROUND</th><th>MV SCORE</th><th>RS</th><th>ES</th><th>EP</th><th>BC</th><th>CS</th><th>STATUS</th><th>FAIL DAY</th></tr></thead><tbody>`;
 
   const scoreCell = (scores, idx) => {
     const v = Number(scores?.[idx] ?? 0);
@@ -136,6 +171,7 @@ function renderClassOverviewFromLatest() {
 
     html += `<tr>
       <td class="val">${teamId}</td>
+      <td>${renderOnlinePill(teamId).replace('online-pill', 'online-pill overview')}</td>
       <td class="val">V${latest.round || '-'}</td>
       <td class="val"><span style="color:${mvCol};font-weight:700">${mv.toFixed(2)}</span></td>
       <td class="val">${scoreCell(latest.scores, 'RS')}</td>
@@ -179,6 +215,10 @@ function renderTeamRows() {
         <option value="11" ${Number(row.budgetMu) === 11 ? 'selected' : ''}>11 MU</option>
       </select>
       <input class="inp" id="team-code-${idx}" type="text" value="${row.joinCode || ''}" readonly>
+      <span class="online-pill" data-team-id="${row.teamId || ''}">
+        <span class="online-dot ${row.teamId && getOnlineCountForTeam(row.teamId) > 0 ? 'on' : ''}"></span>
+        <span class="online-count">${row.teamId ? (getOnlineCountForTeam(row.teamId) > 0 ? `${getOnlineCountForTeam(row.teamId)} online` : 'offline') : '-'}</span>
+      </span>
       <button class="btn-sm" id="team-save-${idx}">SAVE</button>
       <button class="btn-sm" id="team-remove-${idx}" style="color:var(--red);border-color:var(--red)">REMOVE</button>
     </div>
@@ -207,6 +247,7 @@ function renderTeamRows() {
       await teacherRemoveTeam(tid);
     });
   });
+  refreshPresencePills();
 }
 
 async function teacherUpsertTeam(teamId, budgetMu, joinCode, originalTeamId) {
@@ -378,6 +419,14 @@ function bindSessionListeners() {
   }, (error) => {
     showToast(formatFirebaseError(error, 'Failed to read class overview'), 'err');
   }));
+  unsubs.push(onValue(ref(db, `sessions/${sessionId}/presence`), (snap) => {
+    presenceData = snap.val() || {};
+    refreshPresencePills();
+    renderClassOverviewFromLatest();
+    updateSessionUi();
+  }, (error) => {
+    showToast(formatFirebaseError(error, 'Failed to read online presence'), 'err');
+  }));
 }
 
 function unlockCheck() {
@@ -387,6 +436,20 @@ function unlockCheck() {
   statusEl.className = teacherUnlocked ? 'pin-status ok' : 'pin-status bad';
   statusEl.textContent = teacherUnlocked ? 'UNLOCKED' : 'LOCKED';
   updateSessionUi();
+}
+
+function maybeAutoUnlockFromQuery() {
+  const url = new URL(window.location.href);
+  const qPin = String(url.searchParams.get('pin') || '').trim().toUpperCase();
+  if (qPin !== TEACHER_PIN) return;
+  byId('pin-input').value = qPin;
+  teacherUnlocked = true;
+  const statusEl = byId('pin-status');
+  statusEl.className = 'pin-status ok';
+  statusEl.textContent = 'UNLOCKED';
+  updateSessionUi();
+  url.searchParams.delete('pin');
+  window.history.replaceState({}, '', url.pathname + (url.search ? url.search : '') + (url.hash || ''));
 }
 
 function connectSession() {
@@ -430,6 +493,7 @@ function init() {
   bindEvents();
   ensureSignedIn().then(() => {
     connectSession();
+    maybeAutoUnlockFromQuery();
     updateSessionUi();
   });
 }

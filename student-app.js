@@ -4,6 +4,9 @@ import {
   ref,
   get,
   set,
+  update,
+  remove,
+  onDisconnect,
   onValue,
   runTransaction,
   serverTimestamp
@@ -93,6 +96,8 @@ let solTick = null;
 let lastTrajectoryCharts = [];
 let authReady = false;
 let authReadyPromise = Promise.resolve();
+let presenceHeartbeat = null;
+const PRESENCE_CLIENT_ID_KEY = 'ares_presence_client_id_v1';
 
 const STORAGE_KEY = 'ares_student_team_context_v1';
 
@@ -145,6 +150,63 @@ function setLockState(message, isErr) {
 function setAppVisible() {
   byId('lock-screen').style.display = 'none';
   byId('app-content').style.display = 'block';
+}
+
+function getPresenceClientId() {
+  let id = sessionStorage.getItem(PRESENCE_CLIENT_ID_KEY);
+  if (id) return id;
+  if (window.crypto?.randomUUID) {
+    id = window.crypto.randomUUID();
+  } else {
+    id = `c-${Date.now()}-${Math.floor(Math.random() * 1e8)}`;
+  }
+  sessionStorage.setItem(PRESENCE_CLIENT_ID_KEY, id);
+  return id;
+}
+
+function getPresenceRefForCurrentTeam() {
+  if (!teamCtx?.sessionId || !teamCtx?.teamId) return null;
+  const clientId = getPresenceClientId();
+  return ref(db, `sessions/${teamCtx.sessionId}/presence/${teamCtx.teamId}/${clientId}`);
+}
+
+async function stopPresenceTracking(removeNow) {
+  if (presenceHeartbeat) {
+    clearInterval(presenceHeartbeat);
+    presenceHeartbeat = null;
+  }
+  if (!removeNow) return;
+  const pRef = getPresenceRefForCurrentTeam();
+  if (!pRef) return;
+  try {
+    await remove(pRef);
+  } catch (_e) {
+    // Ignore cleanup errors on voluntary leave.
+  }
+}
+
+async function startPresenceTracking() {
+  if (!authReady) return;
+  const pRef = getPresenceRefForCurrentTeam();
+  if (!pRef) return;
+
+  await stopPresenceTracking(false);
+  const payload = {
+    online: true,
+    teamId: teamCtx.teamId,
+    sessionId: teamCtx.sessionId,
+    lastSeen: Date.now()
+  };
+
+  try {
+    await set(pRef, payload);
+    onDisconnect(pRef).remove().catch(() => {});
+    presenceHeartbeat = setInterval(() => {
+      update(pRef, { online: true, lastSeen: Date.now() }).catch(() => {});
+    }, 10000);
+  } catch (err) {
+    showToast(formatFirebaseError(err, 'Presence tracking failed'), 'err');
+  }
 }
 
 function clearRealtimeListeners() {
@@ -735,12 +797,14 @@ function applyTeamNode(team) {
   teamStateLoaded = true;
   teamState = team || null;
   if (!teamState) {
+    stopPresenceTracking(true);
     setLockState('Team was removed by teacher. Please contact your teacher for a new code.', true);
     byId('leave-session-btn').style.display = 'inline-block';
     return;
   }
 
   if (!teamState.active) {
+    stopPresenceTracking(true);
     setLockState('Team access is not active. Wait for teacher instructions.', true);
     return;
   }
@@ -817,6 +881,7 @@ async function attachRealtimeListeners() {
 
   await hydrateTeamStateFromFirestore();
   renderComparison();
+  await startPresenceTracking();
 }
 
 async function studentJoinTeam(code) {
@@ -834,6 +899,7 @@ async function studentJoinTeam(code) {
   setLockState('Checking join code...', false);
 
   try {
+    await stopPresenceTracking(true);
     await authReadyPromise.catch(() => null);
 
     if (!authReady) {
@@ -894,6 +960,7 @@ function leaveSession() {
   updateIdentityUI();
   byId('join-code-input').value = '';
   setLockState('Enter your team code. Your budget and team assignment will load automatically.', false);
+  stopPresenceTracking(true);
 }
 
 function installStaticCharts() {
