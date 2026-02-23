@@ -715,6 +715,13 @@ function applyTeamNode(team) {
   updateIdentityUI();
   updateUI();
   renderRounds();
+
+  // Session status can arrive before team status; re-evaluate lock/app visibility now.
+  if (sessionState) {
+    applySessionNode(sessionState);
+  } else {
+    setLockState('Session joined. Waiting for teacher to start the simulation.', false);
+  }
 }
 
 function applySessionNode(session) {
