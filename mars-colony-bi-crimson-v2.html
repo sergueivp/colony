@@ -1,0 +1,1195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ARES COMMAND — OPERATION: OLYMPUS FOOTHOLD</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=Nunito+Sans:wght@300;400;600;700;800&family=Montserrat:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<style>
+:root {
+  --bg: #f0f0f0;
+  --bg-panel: #ffffff;
+  --bg-card: #f8f8f8;
+  --border: #dde0e6;
+  --crimson: #8b1a1a;
+  --crimson-dark: #6e1414;
+  --crimson-light: #b22222;
+  --crimson-pale: rgba(139,26,26,0.07);
+  --red: #c0392b;
+  --red-pale: rgba(192,57,43,0.08);
+  --green: #1a7a4a;
+  --green-pale: rgba(26,122,74,0.08);
+  --blue: #1a4a8b;
+  --orange: #c07000;
+  --text: #1a1a2e;
+  --text-2: #5a5a72;
+  --text-3: #9999aa;
+  --font-mono: 'IBM Plex Mono', monospace;
+  --font-disp: 'Montserrat', sans-serif;
+  --font-body: 'Nunito Sans', sans-serif;
+  --shadow: 0 1px 4px rgba(0,0,0,0.07);
+  --shadow-md: 0 2px 12px rgba(0,0,0,0.10);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--text);font-family:var(--font-body);min-height:100vh;overflow-x:hidden}
+
+/* ── HEADER ── */
+.hdr{background:var(--crimson);border-bottom:3px solid var(--crimson-dark);position:sticky;top:0;z-index:200}
+.hdr-top{display:flex;align-items:center;justify-content:space-between;padding:10px 28px;border-bottom:1px solid rgba(255,255,255,0.12)}
+.mission-id{font-family:var(--font-disp);font-size:13px;font-weight:800;color:#fff;letter-spacing:0.1em;text-transform:uppercase}
+.mission-id span{font-weight:400;color:rgba(255,255,255,0.6);font-size:11px}
+.hdr-right{display:flex;align-items:center;gap:20px}
+.status-row{display:flex;align-items:center;gap:16px;font-family:var(--font-mono);font-size:10px;color:rgba(255,255,255,0.65)}
+.dot{width:6px;height:6px;border-radius:50%;background:#4ade80;box-shadow:0 0 6px #4ade80;animation:blink 2s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+.sol{color:#fff;font-weight:600}
+.teacher-btn{background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.25);color:#fff;font-family:var(--font-disp);font-size:10px;font-weight:700;letter-spacing:0.12em;padding:7px 16px;cursor:pointer;text-transform:uppercase;transition:all .2s}
+.teacher-btn:hover{background:rgba(255,255,255,0.22)}
+.nav{display:flex}
+.nav-tab{padding:10px 20px;font-family:var(--font-disp);font-size:10px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;cursor:pointer;border:none;background:transparent;color:rgba(255,255,255,0.45);border-right:1px solid rgba(255,255,255,0.1);transition:all .2s;position:relative}
+.nav-tab:hover{color:rgba(255,255,255,.85);background:rgba(0,0,0,.15)}
+.nav-tab.active{color:#fff;background:rgba(0,0,0,.22)}
+.nav-tab.active::after{content:'';position:absolute;bottom:0;left:0;right:0;height:3px;background:#fff}
+
+/* ── LAYOUT ── */
+.main{max-width:1440px;margin:0 auto;padding:24px}
+.sec{display:none}.sec.active{display:block}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px}
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+.mb12{margin-bottom:12px}.mb20{margin-bottom:20px}.mb24{margin-bottom:24px}
+
+/* ── PANEL ── */
+.panel{background:var(--bg-panel);border:1px solid var(--border);box-shadow:var(--shadow);overflow:hidden;position:relative}
+.panel::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--crimson)}
+.ph{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;border-bottom:1px solid var(--border);background:var(--bg-card)}
+.ph-title{font-family:var(--font-disp);font-size:11px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--text)}
+.ph-badge{font-family:var(--font-mono);font-size:8px;color:var(--text-3);background:var(--bg);border:1px solid var(--border);padding:2px 7px;letter-spacing:0.08em}
+.pb{padding:16px}
+
+/* ── PLANET CARDS ── */
+.planet-card{background:var(--bg-panel);border:1px solid var(--border);box-shadow:var(--shadow-md);overflow:hidden}
+.planet-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--crimson)}
+.planet-img-wrap{position:relative;height:240px;overflow:hidden;background:#1a0505}
+.planet-img-wrap img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .4s}
+.planet-card:hover .planet-img-wrap img{transform:scale(1.03)}
+.planet-img-top{position:absolute;top:10px;left:12px;font-family:var(--font-mono);font-size:8px;color:rgba(255,255,255,0.55);letter-spacing:0.15em;text-transform:uppercase;background:rgba(0,0,0,.45);padding:3px 8px}
+.planet-img-bottom{position:absolute;bottom:0;left:0;right:0;padding:12px 16px;background:linear-gradient(transparent,rgba(0,0,0,.75))}
+.planet-img-name{font-family:var(--font-disp);font-size:22px;font-weight:900;color:#fff;letter-spacing:0.06em;text-transform:uppercase;line-height:1}
+.planet-img-sub{font-family:var(--font-mono);font-size:9px;color:rgba(255,255,255,.65);letter-spacing:0.2em;text-transform:uppercase;margin-top:3px}
+.planet-params{display:grid;grid-template-columns:1fr 1fr;border-top:1px solid var(--border)}
+.pp-col{padding:14px 16px;border-right:1px solid var(--border)}
+.pp-col:last-child{border-right:none}
+.pp-label{font-family:var(--font-mono);font-size:7px;color:var(--text-3);letter-spacing:0.3em;text-transform:uppercase;margin-bottom:8px;border-bottom:1px solid var(--border);padding-bottom:5px}
+.pp-row{display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--border);font-family:var(--font-mono);font-size:9px}
+.pp-row:last-child{border-bottom:none}
+.pp-key{color:var(--text-2)}
+.pp-val{color:var(--text);font-weight:600}
+.pp-val.red{color:var(--red)}
+.pp-val.grn{color:var(--green)}
+.pp-val.org{color:var(--orange)}
+
+/* ── DATA SECTION HEADER ── */
+.data-hdr{padding:10px 16px;background:var(--bg-card);border:1px solid var(--border);border-left:4px solid var(--crimson);margin-bottom:16px}
+.data-hdr-title{font-family:var(--font-disp);font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:0.1em;color:var(--text)}
+.data-hdr-source{font-family:var(--font-mono);font-size:8px;color:var(--text-3);margin-top:4px;letter-spacing:0.06em}
+
+/* ── CHART PANELS ── */
+.chart-fn{font-family:var(--font-mono);font-size:8px;color:var(--text-3);line-height:1.5;margin-top:10px;padding-top:8px;border-top:1px solid var(--border);letter-spacing:0.04em}
+.chart-stat-row{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:10px}
+.chart-stat{background:var(--bg-card);border:1px solid var(--border);padding:6px 12px;flex:1;min-width:80px}
+.chart-stat-val{font-family:var(--font-mono);font-size:16px;font-weight:600;color:var(--crimson);line-height:1}
+.chart-stat-lbl{font-family:var(--font-mono);font-size:8px;color:var(--text-3);margin-top:3px;letter-spacing:0.1em;text-transform:uppercase}
+
+/* ── RAW DATA TABLES ── */
+.raw-table{width:100%;border-collapse:collapse;font-family:var(--font-body);font-size:12px}
+.raw-table th{font-family:var(--font-disp);font-size:8px;font-weight:700;letter-spacing:0.15em;color:var(--text-3);text-transform:uppercase;padding:8px 10px;border-bottom:2px solid var(--border);text-align:left;background:var(--bg-card)}
+.raw-table td{padding:7px 10px;border-bottom:1px solid var(--border);color:var(--text-2);vertical-align:top}
+.raw-table tr:last-child td{border-bottom:none}
+.raw-table tr:hover td{background:var(--crimson-pale)}
+.raw-table td.val{font-family:var(--font-mono);font-size:11px;color:var(--text);font-weight:600}
+.raw-table td.flag-red{color:var(--red);font-family:var(--font-mono);font-size:10px}
+.raw-table td.flag-org{color:var(--orange);font-family:var(--font-mono);font-size:10px}
+.raw-table td.flag-grn{color:var(--green);font-family:var(--font-mono);font-size:10px}
+
+/* ── MISSION RULES ── */
+.rule-box{background:var(--bg-card);border:1px solid var(--border);padding:14px 16px}
+.rule-label{font-family:var(--font-mono);font-size:8px;color:var(--crimson);letter-spacing:0.25em;text-transform:uppercase;margin-bottom:8px;font-weight:600}
+.rule-text{font-size:13px;font-weight:400;color:var(--text-2);line-height:1.7}
+
+/* ── EQUIPMENT ── */
+.item-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(295px,1fr));gap:12px}
+.item-card{background:var(--bg-panel);border:1px solid var(--border);border-top:3px solid var(--border);cursor:pointer;transition:all .2s;position:relative;overflow:hidden;box-shadow:var(--shadow)}
+.item-card:hover{box-shadow:var(--shadow-md)}
+.item-card.selected{border-top-color:var(--crimson);border-color:var(--crimson)}
+.item-card.disabled{opacity:.4;cursor:not-allowed}
+.item-hdr{display:flex;align-items:flex-start;justify-content:space-between;padding:12px 14px 10px;border-bottom:1px solid var(--border);background:var(--bg-card)}
+.item-num{font-family:var(--font-mono);font-size:8px;color:var(--text-3);letter-spacing:0.2em}
+.item-name{font-family:var(--font-disp);font-size:11px;font-weight:700;color:var(--text);margin:3px 0;flex:1;padding-right:8px;line-height:1.35}
+.item-mu{font-family:var(--font-mono);font-size:17px;color:var(--crimson);font-weight:600;line-height:1;white-space:nowrap}
+.item-mu span{font-size:8px;color:var(--text-3);display:block;text-align:right}
+.item-body{padding:10px 14px}
+.item-desc{font-size:12px;color:var(--text-2);line-height:1.6;margin-bottom:8px}
+.item-tags{display:flex;gap:5px;flex-wrap:wrap}
+.tag{font-family:var(--font-mono);font-size:7px;padding:2px 6px;border:1px solid;letter-spacing:0.08em;text-transform:uppercase;border-radius:2px}
+.tag-power{color:#7a5500;border-color:#ddb060;background:#fff8ee}
+.tag-risk{color:var(--red);border-color:#e8a0a0;background:#fff5f5}
+.tag-bonus{color:var(--green);border-color:#80c8a8;background:#f0fff8}
+.tag-dep{color:var(--blue);border-color:#90b8e0;background:#f0f6ff}
+.sel-dot{position:absolute;top:10px;right:10px;width:18px;height:18px;border-radius:50%;border:2px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:9px;color:transparent;transition:all .2s}
+.item-card.selected .sel-dot{background:var(--crimson);border-color:var(--crimson);color:#fff}
+
+/* ── PROPOSAL ── */
+.slot-row{display:grid;grid-template-columns:36px 1fr 80px;gap:10px;align-items:center;padding:12px 14px;background:var(--bg-panel);border:1px solid var(--border);margin-bottom:7px;transition:border-color .2s}
+.slot-row.filled{border-color:rgba(139,26,26,.35)}
+.slot-row.locked{border-left:3px solid var(--red);background:var(--red-pale)}
+.slot-num{font-family:var(--font-mono);font-size:10px;color:var(--text-3);text-align:center}
+.slot-name{font-size:14px;font-weight:600;color:var(--text)}
+.slot-empty{font-size:13px;color:var(--text-3);font-style:italic}
+.slot-cost{font-family:var(--font-mono);font-size:13px;color:var(--crimson);text-align:right}
+.lock-badge{font-family:var(--font-mono);font-size:7px;color:var(--red);border:1px solid rgba(192,57,43,.4);padding:2px 5px;display:inline-block;margin-top:3px;letter-spacing:.1em}
+.budget-wrap{background:var(--bg-panel);border:1px solid var(--border);padding:16px;margin-bottom:14px}
+.bud-nums{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px}
+.bud-used{font-family:var(--font-mono);font-size:30px;color:var(--crimson);line-height:1}
+.bud-total{font-family:var(--font-mono);font-size:13px;color:var(--text-2)}
+.bud-lbl{font-family:var(--font-disp);font-size:8px;font-weight:700;letter-spacing:0.25em;color:var(--text-3);text-transform:uppercase;margin-bottom:6px}
+.bud-bar-wrap{height:5px;background:var(--border);position:relative;overflow:hidden}
+.bud-bar{position:absolute;left:0;top:0;height:100%;background:var(--crimson);transition:width .4s,background .4s}
+.bud-bar.over{background:var(--red)}
+.warn-box{background:rgba(192,57,43,.07);border:1px solid rgba(192,57,43,.3);padding:10px 14px;margin-bottom:12px;display:flex;gap:9px;align-items:flex-start}
+.warn-icon{color:var(--orange);flex-shrink:0;font-size:13px}
+.warn-text{font-size:12px;color:var(--red);line-height:1.5}
+.justify-lbl{font-family:var(--font-mono);font-size:8px;color:var(--text-2);letter-spacing:0.2em;text-transform:uppercase;margin-bottom:6px}
+.justify-field{width:100%;background:var(--bg);border:1px solid var(--border);color:var(--text);font-family:var(--font-body);font-size:13px;padding:10px 12px;resize:vertical;min-height:75px;line-height:1.6;transition:border-color .2s}
+.justify-field:focus{outline:none;border-color:var(--crimson)}
+.justify-field::placeholder{color:var(--text-3)}
+.hab-opts{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px}
+.hab-opt{background:var(--bg-panel);border:1px solid var(--border);padding:12px;cursor:pointer;text-align:center;transition:all .2s}
+.hab-opt:hover{border-color:#bbb}
+.hab-opt.selected{border-color:var(--crimson);background:var(--crimson-pale)}
+.hab-opt-title{font-family:var(--font-disp);font-size:9px;font-weight:700;letter-spacing:0.12em;color:var(--text-2);text-transform:uppercase;margin-bottom:3px}
+.hab-opt.selected .hab-opt-title{color:var(--crimson)}
+.round-wrap{display:flex;gap:8px;align-items:center;margin-bottom:16px}
+.rd-dot{width:30px;height:30px;border-radius:50%;border:2px solid var(--border);display:flex;align-items:center;justify-content:center;font-family:var(--font-disp);font-size:9px;font-weight:700;color:var(--text-3);transition:all .3s}
+.rd-dot.active{border-color:var(--crimson);color:var(--crimson)}
+.rd-dot.done{background:var(--crimson);border-color:var(--crimson);color:#fff}
+.rd-line{flex:1;height:1px;background:var(--border)}
+
+/* ── BUTTONS ── */
+.btn{background:var(--crimson);border:1px solid var(--crimson);color:#fff;font-family:var(--font-disp);font-size:11px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;padding:12px 28px;cursor:pointer;transition:all .2s;box-shadow:0 2px 8px rgba(139,26,26,.2)}
+.btn:hover{background:var(--crimson-dark);box-shadow:0 4px 14px rgba(139,26,26,.3)}
+.btn:disabled{background:var(--border);border-color:var(--border);color:var(--text-3);cursor:not-allowed;box-shadow:none}
+.btn-sm{background:transparent;border:1px solid var(--border);color:var(--text-2);font-family:var(--font-disp);font-size:9px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;padding:8px 16px;cursor:pointer;transition:all .2s}
+.btn-sm:hover{border-color:var(--crimson);color:var(--crimson)}
+.btn-row{display:flex;align-items:center;gap:12px;margin-top:16px}
+
+/* ── FEEDBACK ── */
+.fb-report{background:var(--bg-panel);border:1px solid var(--border);border-top:3px solid var(--crimson);padding:22px;margin-bottom:14px;animation:fadein .4s ease;box-shadow:var(--shadow-md)}
+@keyframes fadein{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+.fb-hdr{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:18px;padding-bottom:14px;border-bottom:1px solid var(--border)}
+.fb-title{font-family:var(--font-disp);font-size:12px;font-weight:700;color:var(--crimson);letter-spacing:0.15em;text-transform:uppercase}
+.fb-meta{font-family:var(--font-mono);font-size:8px;color:var(--text-3);margin-top:4px}
+.fb-status{font-family:var(--font-mono);font-size:9px;padding:5px 12px;border:1px solid;letter-spacing:0.12em;text-transform:uppercase}
+.fb-status.fail{color:var(--red);border-color:var(--red);background:var(--red-pale)}
+.fb-status.warn{color:var(--orange);border-color:var(--orange);background:rgba(192,112,0,.07)}
+.fb-status.pass{color:var(--green);border-color:var(--green);background:var(--green-pale)}
+.idx-row{display:grid;grid-template-columns:160px 60px 60px 1fr 110px;gap:10px;align-items:center;padding:7px 0;border-bottom:1px solid var(--border)}
+.idx-row:last-child{border-bottom:none}
+.idx-name{font-family:var(--font-body);font-size:13px;font-weight:600}
+.idx-score{font-family:var(--font-mono);font-size:14px;text-align:center}
+.idx-score.ok{color:var(--green)}.idx-score.warn{color:var(--orange)}.idx-score.fail{color:var(--red)}
+.idx-thresh{font-family:var(--font-mono);font-size:9px;color:var(--text-3);text-align:center}
+.idx-bar-wrap{height:4px;background:var(--border);position:relative}
+.idx-bar{position:absolute;left:0;top:0;height:100%;transition:width .5s}
+.idx-lbl{font-family:var(--font-mono);font-size:8px;letter-spacing:0.12em;text-align:right}
+.fb-line{display:flex;gap:10px;margin-bottom:9px;font-size:13px;color:var(--text-2);line-height:1.6}
+.fb-line::before{content:'›';font-family:var(--font-mono);color:var(--crimson);flex-shrink:0}
+.fb-line.crit{color:var(--red)}.fb-line.crit::before{color:var(--red)}
+.fail-day{background:var(--red-pale);border:1px solid rgba(192,57,43,.3);padding:12px 16px;margin-top:14px;display:flex;justify-content:space-between;align-items:center}
+.fail-day-lbl{font-family:var(--font-mono);font-size:8px;color:var(--red);letter-spacing:0.2em;text-transform:uppercase}
+.fail-day-val{font-family:var(--font-mono);font-size:22px;color:var(--red)}
+.mv-box{background:var(--bg-card);border:1px solid var(--border);padding:18px;text-align:center}
+.mv-lbl{font-family:var(--font-disp);font-size:8px;font-weight:700;letter-spacing:0.25em;color:var(--text-3);text-transform:uppercase;margin-bottom:6px}
+.mv-val{font-family:var(--font-mono);font-size:44px;line-height:1;transition:color .4s}
+.mv-thresh{font-family:var(--font-mono);font-size:9px;color:var(--text-3);margin-top:4px}
+.pwr-box{background:var(--bg-card);border:1px solid var(--border);padding:10px 12px;text-align:center}
+.pwr-lbl{font-family:var(--font-disp);font-size:8px;font-weight:700;letter-spacing:0.15em;color:var(--text-3);text-transform:uppercase;margin-bottom:5px}
+.pwr-val{font-family:var(--font-mono);font-size:20px;line-height:1}
+
+/* ── LANGUAGE ── */
+.frame-cat{margin-bottom:18px}
+.frame-cat-title{font-family:var(--font-mono);font-size:8px;color:var(--crimson);letter-spacing:0.3em;text-transform:uppercase;margin-bottom:8px;padding-bottom:5px;border-bottom:2px solid var(--crimson);font-weight:600}
+.frame-item{background:var(--bg-panel);border:1px solid var(--border);padding:9px 13px;margin-bottom:5px;font-family:var(--font-body);font-size:13px;color:var(--text);line-height:1.5;transition:border-color .2s}
+.frame-item:hover{border-color:var(--crimson);background:var(--crimson-pale)}
+
+/* ── PRESENTATION ── */
+.pres-step{background:var(--bg-panel);border:1px solid var(--border);border-left:4px solid var(--crimson);padding:14px 16px;margin-bottom:9px}
+.pres-step-num{font-family:var(--font-mono);font-size:8px;color:var(--crimson);letter-spacing:0.2em;margin-bottom:5px}
+.pres-step-title{font-family:var(--font-disp);font-size:12px;font-weight:700;color:var(--text);margin-bottom:4px;letter-spacing:0.06em}
+.pres-step-time{font-family:var(--font-mono);font-size:8px;color:var(--text-3);margin-bottom:6px}
+.pres-step-desc{font-size:12px;color:var(--text-2);line-height:1.6}
+
+/* ── INPUTS ── */
+.inp{background:var(--bg);border:1px solid var(--border);color:var(--text);font-family:var(--font-body);font-size:13px;padding:9px 12px;width:100%;transition:border-color .2s}
+.inp:focus{outline:none;border-color:var(--crimson)}
+.inp::placeholder{color:var(--text-3)}
+.inp-lbl{font-family:var(--font-mono);font-size:8px;color:var(--text-2);letter-spacing:0.2em;text-transform:uppercase;margin-bottom:5px}
+select.inp{cursor:pointer}
+
+/* ── MISC ── */
+.empty{text-align:center;padding:60px 20px;font-family:var(--font-mono);font-size:10px;color:var(--text-3);letter-spacing:0.2em;text-transform:uppercase}
+.divider{height:1px;background:var(--border);margin:20px 0}
+.text-crimson{color:var(--crimson)}.text-red{color:var(--red)}.text-green{color:var(--green)}
+.flex{display:flex}.flex-col{flex-direction:column}.align-center{align-items:center}.jbetween{justify-content:space-between}.gap8{gap:8px}.gap12{gap:12px}.gap16{gap:16px}
+
+/* ── TEACHER MODAL ── */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:1000;align-items:center;justify-content:center}
+.modal-overlay.open{display:flex}
+.modal{background:#fff;border-top:4px solid var(--crimson);width:560px;max-width:95vw;max-height:90vh;overflow-y:auto;box-shadow:0 8px 40px rgba(0,0,0,.2)}
+.modal-hdr{background:var(--crimson);padding:16px 20px;display:flex;align-items:center;justify-content:space-between}
+.modal-title{font-family:var(--font-disp);font-size:13px;font-weight:800;color:#fff;letter-spacing:0.12em;text-transform:uppercase}
+.modal-close{background:transparent;border:none;color:rgba(255,255,255,.7);font-size:20px;cursor:pointer;line-height:1;padding:0 4px}
+.modal-close:hover{color:#fff}
+.modal-body{padding:20px}
+.modal-section{margin-bottom:20px}
+.modal-section-title{font-family:var(--font-mono);font-size:8px;color:var(--text-3);letter-spacing:0.25em;text-transform:uppercase;margin-bottom:10px;padding-bottom:5px;border-bottom:1px solid var(--border)}
+.pin-wrap{display:flex;gap:10px;align-items:center;margin-bottom:16px}
+.pin-status{font-family:var(--font-mono);font-size:10px;padding:4px 10px;border:1px solid}
+.pin-status.ok{color:var(--green);border-color:var(--green);background:var(--green-pale)}
+.pin-status.bad{color:var(--red);border-color:var(--red);background:var(--red-pale)}
+.team-row{display:grid;grid-template-columns:1fr 100px 80px;gap:8px;align-items:center;margin-bottom:6px}
+.team-row-hdr{display:grid;grid-template-columns:1fr 100px 80px;gap:8px;margin-bottom:4px}
+.team-row-hdr div{font-family:var(--font-mono);font-size:7px;color:var(--text-3);letter-spacing:0.15em;text-transform:uppercase}
+.broadcast-info{background:var(--bg-card);border:1px solid var(--border);padding:10px 14px;font-family:var(--font-mono);font-size:9px;color:var(--text-2);line-height:1.6;margin-top:12px}
+
+/* ── TOAST ── */
+.toast{position:fixed;bottom:22px;right:22px;background:#fff;border:2px solid var(--crimson);border-left:5px solid var(--crimson);padding:12px 18px;font-family:var(--font-mono);font-size:10px;color:var(--crimson);z-index:9999;animation:fadein .3s;box-shadow:0 4px 16px rgba(139,26,26,.15)}
+.toast.err{border-color:var(--red);border-left-color:var(--red);color:var(--red)}
+
+/* ── RESPONSIVE ── */
+@media(max-width:900px){
+  .g2,.g3,.g4{grid-template-columns:1fr}
+  .planet-params{grid-template-columns:1fr}
+  .pp-col{border-right:none;border-bottom:1px solid var(--border)}
+  .idx-row{grid-template-columns:120px 50px 50px 1fr}
+  .idx-lbl{display:none}
+}
+</style>
+</head>
+<body>
+
+<!-- ══ TEACHER MODAL ══ -->
+<div class="modal-overlay" id="teacher-modal">
+  <div class="modal">
+    <div class="modal-hdr">
+      <div class="modal-title">🔑 TEACHER DASHBOARD</div>
+      <button class="modal-close" onclick="closeTeacher()">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-section">
+        <div class="modal-section-title">ACCESS PIN</div>
+        <div class="pin-wrap">
+          <input class="inp" id="pin-input" type="password" placeholder="Enter PIN..." style="width:160px" oninput="checkPin()">
+          <span class="pin-status bad" id="pin-status">LOCKED</span>
+        </div>
+      </div>
+      <div id="teacher-content" style="display:none">
+        <div class="modal-section">
+          <div class="modal-section-title">TEAM BUDGET ALLOCATION</div>
+          <div class="team-row-hdr">
+            <div>TEAM ID</div><div>BUDGET</div><div>STATUS</div>
+          </div>
+          <div id="team-slots"></div>
+          <button class="btn" style="margin-top:12px;font-size:10px;padding:10px 20px" onclick="addTeamSlot()">+ ADD TEAM</button>
+        </div>
+        <div class="modal-section">
+          <div class="modal-section-title">BROADCAST SETTINGS</div>
+          <button class="btn" onclick="broadcastBudgets()" style="font-size:10px;padding:10px 20px">ACTIVATE BUDGETS →</button>
+          <div class="broadcast-info" id="broadcast-info">No budgets activated yet. Enter team IDs and budgets above, then click ACTIVATE.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ HEADER ══ -->
+<div class="hdr">
+  <div class="hdr-top">
+    <div>
+      <div class="mission-id">ARES COMMAND <span>// COLONISATION PLANNING UNIT — OPERATION: OLYMPUS FOOTHOLD</span></div>
+    </div>
+    <div class="hdr-right">
+      <div class="status-row">
+        <div class="dot"></div>
+        <span>SIMULATION ACTIVE</span>
+        <span>|</span><span class="sol">SOL 001</span>
+        <span>|</span><span id="team-display">TEAM: —</span>
+        <span>|</span><span id="round-display">ROUND: V1</span>
+      </div>
+      <button class="teacher-btn" onclick="openTeacher()">🔑 TEACHER</button>
+    </div>
+  </div>
+  <div class="nav">
+    <button class="nav-tab active" onclick="showSec('site')">01 — SITE BRIEF</button>
+    <button class="nav-tab" onclick="showSec('equipment')">02 — EQUIPMENT</button>
+    <button class="nav-tab" onclick="showSec('proposal')">03 — PROPOSAL</button>
+    <button class="nav-tab" onclick="showSec('feedback')">04 — SIM FEEDBACK</button>
+    <button class="nav-tab" onclick="showSec('language')">05 — LANGUAGE SUPPORT</button>
+    <button class="nav-tab" onclick="showSec('presentation')">06 — PRESENTATION</button>
+  </div>
+</div>
+
+<div class="main">
+
+<!-- ══════════════════════════ 01 SITE BRIEF ══════════════════════════ -->
+<div id="sec-site" class="sec active">
+
+  <!-- Planet + Site cards -->
+  <div class="g2 mb20">
+
+    <!-- MARS PLANET CARD -->
+    <div class="planet-card" style="position:relative">
+      <div class="planet-img-wrap">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/0/02/OSIRIS_Mars_true_color.jpg/800px-OSIRIS_Mars_true_color.jpg"
+             alt="Mars — OSIRIS Camera, ESA Rosetta 2007"
+             onerror="this.parentElement.style.background='radial-gradient(circle at 60% 40%, #c0391b, #6e1414, #1a0505)';this.style.display='none'">
+        <div class="planet-img-top">OSIRIS / ESA ROSETTA FLYBY — 24 FEB 2007</div>
+        <div class="planet-img-bottom">
+          <div class="planet-img-name">MARS</div>
+          <div class="planet-img-sub">FOURTH PLANET — THARSIS REGION FACING</div>
+        </div>
+      </div>
+      <div class="planet-params">
+        <div class="pp-col">
+          <div class="pp-label">PHYSICAL</div>
+          <div class="pp-row"><span class="pp-key">Diameter</span><span class="pp-val">6,779 km</span></div>
+          <div class="pp-row"><span class="pp-key">Mass</span><span class="pp-val">6.39 × 10²³ kg</span></div>
+          <div class="pp-row"><span class="pp-key">Gravity</span><span class="pp-val org">3.72 m/s² (0.38g)</span></div>
+          <div class="pp-row"><span class="pp-key">Axial tilt</span><span class="pp-val">25.19°</span></div>
+          <div class="pp-row"><span class="pp-key">Moons</span><span class="pp-val">2 (Phobos, Deimos)</span></div>
+          <div class="pp-row"><span class="pp-key">Magnetic field</span><span class="pp-val red">None (remnants only)</span></div>
+        </div>
+        <div class="pp-col">
+          <div class="pp-label">ENVIRONMENTAL</div>
+          <div class="pp-row"><span class="pp-key">Sol duration</span><span class="pp-val">24h 37m 22s</span></div>
+          <div class="pp-row"><span class="pp-key">Orbital period</span><span class="pp-val">686.97 Earth days</span></div>
+          <div class="pp-row"><span class="pp-key">Surface pressure</span><span class="pp-val red">636 Pa avg</span></div>
+          <div class="pp-row"><span class="pp-key">Temp range</span><span class="pp-val red">−143°C → +35°C</span></div>
+          <div class="pp-row"><span class="pp-key">Solar irradiance</span><span class="pp-val org">589 W/m² avg</span></div>
+          <div class="pp-row"><span class="pp-key">Atmosphere</span><span class="pp-val">95.3% CO₂</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- OLYMPUS MONS SITE CARD -->
+    <div class="planet-card" style="position:relative">
+      <div class="planet-img-wrap">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/5b/Olympus_Mons_Viking_16.jpg/1200px-Olympus_Mons_Viking_16.jpg"
+             alt="Olympus Mons — Viking Orbiter NASA 1978"
+             onerror="this.parentElement.style.background='radial-gradient(ellipse at 40% 50%, #5a3a20, #2a1a0a, #080402)';this.style.display='none'">
+        <div class="planet-img-top">VIKING ORBITER 1 — NASA JPL — 1978 — MOSAIC</div>
+        <div class="planet-img-bottom">
+          <div class="planet-img-name">OLYMPUS MONS</div>
+          <div class="planet-img-sub">SITE ALPHA — LOWER WESTERN FLANK — 18.4°N 226.5°E</div>
+        </div>
+      </div>
+      <div class="planet-params">
+        <div class="pp-col">
+          <div class="pp-label">VOLCANO</div>
+          <div class="pp-row"><span class="pp-key">Summit height</span><span class="pp-val">21,287 m (datum)</span></div>
+          <div class="pp-row"><span class="pp-key">Base diameter</span><span class="pp-val">624 km</span></div>
+          <div class="pp-row"><span class="pp-key">Caldera size</span><span class="pp-val">80 × 60 km</span></div>
+          <div class="pp-row"><span class="pp-key">Last eruption</span><span class="pp-val org">~25 Ma (est.)</span></div>
+          <div class="pp-row"><span class="pp-key">Escarpment</span><span class="pp-val red">up to 8,000 m</span></div>
+          <div class="pp-row"><span class="pp-key">Lava tube evidence</span><span class="pp-val org">SHARAD anomalies</span></div>
+        </div>
+        <div class="pp-col">
+          <div class="pp-label">SITE ALPHA CONDITIONS</div>
+          <div class="pp-row"><span class="pp-key">Altitude</span><span class="pp-val">~15,000 m</span></div>
+          <div class="pp-row"><span class="pp-key">Atmos. pressure</span><span class="pp-val red">~158 Pa (0.16 kPa)</span></div>
+          <div class="pp-row"><span class="pp-key">Slope gradient</span><span class="pp-val">2–5°</span></div>
+          <div class="pp-row"><span class="pp-key">Terrain</span><span class="pp-val">Basaltic aa lava</span></div>
+          <div class="pp-row"><span class="pp-key">Regolith depth</span><span class="pp-val">~2–5 m</span></div>
+          <div class="pp-row"><span class="pp-key">Coordinates</span><span class="pp-val grn">18.4°N / 226.5°E</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Mission brief — neutral -->
+  <div style="background:var(--bg-card);border:1px solid var(--border);border-left:4px solid var(--crimson);padding:14px 18px;margin-bottom:20px">
+    <div style="font-family:var(--font-disp);font-size:11px;font-weight:800;letter-spacing:0.1em;text-transform:uppercase;color:var(--crimson);margin-bottom:6px">MISSION DIRECTIVE — OPERATION: OLYMPUS FOOTHOLD</div>
+    <div style="font-size:14px;color:var(--text-2);line-height:1.75">Your team is responsible for designing the first permanent human presence at <strong style="color:var(--text)">Site Alpha, Olympus Mons</strong>. Study the environmental data below. Select exactly <strong style="color:var(--text)">4 items</strong> from the equipment catalogue within your assigned cargo budget. Submit your proposal. Justify every decision with data.</div>
+  </div>
+
+  <!-- Environmental Data Header -->
+  <div class="data-hdr mb20">
+    <div class="data-hdr-title">ENVIRONMENTAL DATA — SITE ALPHA, OLYMPUS MONS</div>
+    <div class="data-hdr-source">Sources: NASA RAD/MSL · REMS/Curiosity · MCS/MRO · TES/MGS · HRSC/ESA · MOLA/MGS · SHARAD/MRO — Projected 180-sol window. Values adjusted for 18.4°N, 226.5°E, ~15,000 m elevation.</div>
+  </div>
+
+  <!-- Charts row 1 -->
+  <div class="g2 mb20">
+
+    <div class="panel">
+      <div class="ph"><div class="ph-title">IONISING RADIATION DOSE RATE</div><div class="ph-badge">mSv/day — RAD INSTRUMENT SCALED</div></div>
+      <div class="pb">
+        <div class="chart-stat-row">
+          <div class="chart-stat"><div class="chart-stat-val">1.05</div><div class="chart-stat-lbl">avg baseline (mSv/d)</div></div>
+          <div class="chart-stat"><div class="chart-stat-val" style="color:var(--red)">14.2</div><div class="chart-stat-lbl">SPE peak recorded</div></div>
+          <div class="chart-stat"><div class="chart-stat-val">3</div><div class="chart-stat-lbl">solar events / 180 sol</div></div>
+          <div class="chart-stat"><div class="chart-stat-val org">189</div><div class="chart-stat-lbl">cumul. mSv (baseline)</div></div>
+        </div>
+        <div style="position:relative;height:200px"><canvas id="ch-rad"></canvas></div>
+        <div class="chart-fn">RAD (Radiation Assessment Detector) baseline from MSL/Curiosity surface data (0.67 mSv/day at datum). Scaled +57% for reduced atmospheric column at 15,000 m altitude. Solar Particle Events (SPEs) modelled from historical occurrence rate; dose spikes are GCR + SEP combined. NASA career limit: 1,000 mSv. Annual baseline at this site: ~383 mSv.</div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="ph"><div class="ph-title">SURFACE TEMPERATURE RANGE</div><div class="ph-badge">°C — MIN / MAX — REMS SCALED</div></div>
+      <div class="pb">
+        <div class="chart-stat-row">
+          <div class="chart-stat"><div class="chart-stat-val" style="color:var(--red)">−26</div><div class="chart-stat-lbl">max recorded (°C)</div></div>
+          <div class="chart-stat"><div class="chart-stat-val" style="color:var(--blue)">−103</div><div class="chart-stat-lbl">min recorded (°C)</div></div>
+          <div class="chart-stat"><div class="chart-stat-val org">77°C</div><div class="chart-stat-lbl">daily swing avg</div></div>
+          <div class="chart-stat"><div class="chart-stat-val">−62</div><div class="chart-stat-lbl">mean (°C)</div></div>
+        </div>
+        <div style="position:relative;height:200px"><canvas id="ch-temp"></canvas></div>
+        <div class="chart-fn">REMS (Rover Environmental Monitoring Station) data from Gale Crater (4.6°S), adjusted for latitude 18.4°N and altitude correction of approximately −15°C from datum-level readings. Thermal cycling induces material fatigue in seals, joints and structural connections at rate proportional to ΔT per sol.</div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="ph"><div class="ph-title">ATMOSPHERIC DUST OPTICAL DEPTH (τ)</div><div class="ph-badge">TAU — MCS/TES CLIMATOLOGY</div></div>
+      <div class="pb">
+        <div class="chart-stat-row">
+          <div class="chart-stat"><div class="chart-stat-val">0.35</div><div class="chart-stat-lbl">clear season τ</div></div>
+          <div class="chart-stat"><div class="chart-stat-val org">2.8</div><div class="chart-stat-lbl">regional storm peak</div></div>
+          <div class="chart-stat"><div class="chart-stat-val" style="color:var(--red)">5.0+</div><div class="chart-stat-lbl">global storm τ</div></div>
+          <div class="chart-stat"><div class="chart-stat-val">Ls 180°</div><div class="chart-stat-lbl">dust season onset</div></div>
+        </div>
+        <div style="position:relative;height:200px"><canvas id="ch-dust"></canvas></div>
+        <div class="chart-fn">MCS (Mars Climate Sounder) & TES (Thermal Emission Spectrometer) climatological record for Tharsis region. τ = 1.0 reduces solar transmission by ~63%. τ = 2.8 (regional storm) reduces to ~6%. Dust also accumulates on exposed horizontal surfaces at ~0.1–1.0 mm/year depending on wind regime. Global dust storm probability in any given Mars year: ~25%.</div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="ph"><div class="ph-title">SOLAR IRRADIANCE & ATMOSPHERIC COMPOSITION</div><div class="ph-badge">W/m² + MOLE FRACTION</div></div>
+      <div class="pb">
+        <div class="g2" style="gap:12px">
+          <div>
+            <div style="font-family:var(--font-mono);font-size:8px;color:var(--text-3);letter-spacing:0.15em;text-transform:uppercase;margin-bottom:6px">IRRADIANCE COMPARISON (W/m²)</div>
+            <div style="position:relative;height:180px"><canvas id="ch-solar"></canvas></div>
+          </div>
+          <div>
+            <div style="font-family:var(--font-mono);font-size:8px;color:var(--text-3);letter-spacing:0.15em;text-transform:uppercase;margin-bottom:6px">ATMOSPHERIC COMPOSITION</div>
+            <div style="position:relative;height:180px"><canvas id="ch-atmos"></canvas></div>
+          </div>
+        </div>
+        <div class="chart-fn">Left: Solar irradiance at Earth (1,361 W/m²) vs Mars average (589 W/m²) vs site clear-sky (~575 W/m² — thin atmosphere reduces dust attenuation) vs site during τ=2.8 storm (~35 W/m²). Right: Martian atmospheric composition by volume (MAVEN/Viking Gas Chromatograph data). O₂ partial pressure at this site: ~0.021 kPa. Immediately fatal to unprotected crew.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Data tables row -->
+  <div class="g3 mb20">
+
+    <div class="panel">
+      <div class="ph"><div class="ph-title">WIND REGIME</div><div class="ph-badge">REMS / MCD MODEL</div></div>
+      <div class="pb" style="padding:12px">
+        <table class="raw-table">
+          <thead><tr><th>Parameter</th><th>Value</th><th>Note</th></tr></thead>
+          <tbody>
+            <tr><td>Mean wind speed</td><td class="val">3.4 m/s</td><td class="flag-grn">LOW</td></tr>
+            <tr><td>Maximum (storm)</td><td class="val">32 m/s</td><td class="flag-org">MODERATE</td></tr>
+            <tr><td>Katabatic (night slope)</td><td class="val">8–15 m/s</td><td class="flag-org">NOTE</td></tr>
+            <tr><td>Dynamic pressure @ 32 m/s</td><td class="val">~2.4 Pa</td><td class="flag-grn">LOW FORCE</td></tr>
+            <tr><td>Dominant direction</td><td class="val">W–SW</td><td>Planetary circ.</td></tr>
+            <tr><td>Dust devil frequency</td><td class="val">Low</td><td>High altitude site</td></tr>
+            <tr><td>Abrasion risk (basalt grit)</td><td class="val">Moderate</td><td class="flag-org">SEALS/OPTICS</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="ph"><div class="ph-title">PRESSURE PROFILE AT ALTITUDE</div><div class="ph-badge">MOLA / MCS</div></div>
+      <div class="pb" style="padding:12px">
+        <table class="raw-table">
+          <thead><tr><th>Altitude (m)</th><th>Pressure (Pa)</th><th>% Earth SL</th></tr></thead>
+          <tbody>
+            <tr><td>Earth sea level (ref)</td><td class="val">101,325 Pa</td><td>100%</td></tr>
+            <tr><td>Mars datum (0 m)</td><td class="val">636 Pa</td><td class="flag-org">0.63%</td></tr>
+            <tr><td>5,000 m</td><td class="val">400 Pa</td><td class="flag-org">0.39%</td></tr>
+            <tr><td>10,000 m</td><td class="val">252 Pa</td><td class="flag-red">0.25%</td></tr>
+            <tr><td style="font-weight:700;color:var(--crimson)">15,000 m ← SITE</td><td class="val" style="color:var(--red)">158 Pa</td><td class="flag-red">0.16%</td></tr>
+            <tr><td>20,000 m</td><td class="val">100 Pa</td><td class="flag-red">0.10%</td></tr>
+            <tr><td>Habitat required pressure</td><td class="val">~70,000 Pa</td><td>~69% Earth</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="ph"><div class="ph-title">GEOLOGICAL SURVEY</div><div class="ph-badge">HRSC / SHARAD / CRISM</div></div>
+      <div class="pb" style="padding:12px">
+        <table class="raw-table">
+          <thead><tr><th>Parameter</th><th>Finding</th></tr></thead>
+          <tbody>
+            <tr><td>Surface rock type</td><td class="val">Basalt (Mg-rich)</td></tr>
+            <tr><td>Mineral composition</td><td class="val">Olivine, pyroxene</td></tr>
+            <tr><td>Regolith depth</td><td class="val">2–5 m est.</td></tr>
+            <tr><td>Surface age (site)</td><td class="val">~25–100 Ma</td></tr>
+            <tr><td>SHARAD radar anomalies</td><td class="val org">YES — subsurface</td></tr>
+            <tr><td>Void size (Earth analogy)</td><td class="val org">50–300 m diam.</td></tr>
+            <tr><td>Void structural stability</td><td class="val">Unknown — unsampled</td></tr>
+            <tr><td>Water ice (subsurface)</td><td class="val">Unconfirmed at site</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Mission Rules -->
+  <div class="panel">
+    <div class="ph"><div class="ph-title">MISSION PARAMETERS</div><div class="ph-badge">SIMULATION RULES</div></div>
+    <div class="pb">
+      <div class="g3" style="gap:16px">
+        <div class="rule-box">
+          <div class="rule-label">CARGO SYSTEM</div>
+          <div class="rule-text">Each item carries a defined <strong>Mass Unit (MU)</strong> cost. Your team budget is assigned by mission command. Select exactly <strong>4 items</strong>. Total MU must not exceed your budget.</div>
+        </div>
+        <div class="rule-box">
+          <div class="rule-label">REVISION PROTOCOL</div>
+          <div class="rule-text">Maximum <strong>3 submission rounds</strong> (v1, v2, v3). After v1, you lock 2 items permanently. Swapping any unlocked item in revision costs <strong>+0.5 MU</strong> reconfiguration penalty.</div>
+        </div>
+        <div class="rule-box">
+          <div class="rule-label">FEEDBACK SYSTEM</div>
+          <div class="rule-text">All simulation feedback is <strong>diagnostic</strong>. You will be told what is projected to fail and when. Strategic interpretation and corrective decisions are entirely your responsibility.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /site -->
+
+<!-- ══════════════════════════ 02 EQUIPMENT ══════════════════════════ -->
+<div id="sec-equipment" class="sec">
+  <div class="flex jbetween align-center mb20">
+    <div>
+      <div style="font-family:var(--font-disp);font-size:13px;font-weight:800;letter-spacing:0.1em;text-transform:uppercase">MASTER EQUIPMENT CATALOGUE</div>
+      <div style="font-family:var(--font-mono);font-size:9px;color:var(--text-3);margin-top:4px">20 ITEMS — SELECT EXACTLY 4 — BUDGET ENFORCED ON PROPOSAL TAB</div>
+    </div>
+    <div class="flex gap12 align-center">
+      <div style="font-family:var(--font-mono);font-size:11px;color:var(--text-2)">SELECTED: <span id="sel-count" style="color:var(--crimson)">0</span>/4</div>
+      <div style="font-family:var(--font-mono);font-size:11px;color:var(--text-2)">MU USED: <span id="mu-used-eq" style="color:var(--crimson)">0</span></div>
+      <button class="btn-sm" onclick="clearSel()">CLEAR ALL</button>
+      <button class="btn-sm" onclick="showSec('proposal')">VIEW PROPOSAL →</button>
+    </div>
+  </div>
+  <div class="item-grid" id="item-grid"></div>
+</div>
+
+<!-- ══════════════════════════ 03 PROPOSAL ══════════════════════════ -->
+<div id="sec-proposal" class="sec">
+  <div class="g2 gap16">
+    <div>
+      <div class="panel mb12">
+        <div class="ph"><div class="ph-title">SUBMISSION ROUND</div><div class="ph-badge" id="round-badge">V1 — INITIAL</div></div>
+        <div class="pb">
+          <div class="round-wrap" id="round-wrap"></div>
+          <div class="warn-box" id="lock-warn" style="display:none">
+            <span class="warn-icon">⚠</span>
+            <span class="warn-text">Items marked LOCKED cannot be changed. Swapping any non-locked item adds +0.5 MU reconfiguration cost.</span>
+          </div>
+        </div>
+      </div>
+      <div class="panel mb12">
+        <div class="ph"><div class="ph-title">TEAM CONFIGURATION</div></div>
+        <div class="pb">
+          <div class="g2 gap12">
+            <div><div class="inp-lbl">TEAM ID</div><input class="inp" id="team-id" type="text" placeholder="e.g. ALPHA-04" oninput="onTeamIdChange()"></div>
+            <div><div class="inp-lbl">CARGO BUDGET (MU)</div><select class="inp" id="budget-sel" onchange="onBudgetChange()">
+              <option value="13">13 MU — Extended</option>
+              <option value="12" selected>12 MU — Standard</option>
+              <option value="11">11 MU — Restricted</option>
+            </select></div>
+          </div>
+          <div class="warn-box" style="margin-top:10px;margin-bottom:0;background:rgba(26,122,74,0.07);border-color:rgba(26,122,74,0.3)" id="teacher-budget-note" style="display:none">
+            <span class="warn-icon" style="color:var(--green)">✓</span>
+            <span class="warn-text" style="color:var(--green)" id="teacher-budget-text"></span>
+          </div>
+        </div>
+      </div>
+      <div class="panel mb12">
+        <div class="ph"><div class="ph-title">CARGO BUDGET METER</div></div>
+        <div class="pb">
+          <div class="budget-wrap" style="margin-bottom:0">
+            <div class="bud-lbl">MASS UNITS ALLOCATED</div>
+            <div class="bud-nums"><div class="bud-used"><span id="mu-used">0</span></div><div class="bud-total">/ <span id="mu-total">12</span> MU</div></div>
+            <div class="bud-bar-wrap"><div class="bud-bar" id="bud-bar" style="width:0%"></div></div>
+          </div>
+          <div class="warn-box" id="bud-warn" style="display:none;margin-bottom:0;margin-top:10px">
+            <span class="warn-icon">⚠</span><span class="warn-text" id="bud-warn-text">Budget exceeded.</span>
+          </div>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="ph"><div class="ph-title">HABITATION STRATEGY</div><div class="ph-badge">REQUIRED</div></div>
+        <div class="pb">
+          <div class="hab-opts" id="hab-opts">
+            <div class="hab-opt" onclick="selHab('surface',this)"><div class="hab-opt-title">SURFACE</div><div style="font-size:10px;color:var(--text-3);margin-top:3px">Open exposure</div></div>
+            <div class="hab-opt" onclick="selHab('partial',this)"><div class="hab-opt-title">PARTIAL SUBSURFACE</div><div style="font-size:10px;color:var(--text-3);margin-top:3px">Bermed / shielded</div></div>
+            <div class="hab-opt" onclick="selHab('subsurface',this)"><div class="hab-opt-title">FULLY SUBSURFACE</div><div style="font-size:10px;color:var(--text-3);margin-top:3px">Lava tube / buried</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div>
+      <div class="panel">
+        <div class="ph"><div class="ph-title">SELECTED ITEMS</div><div class="ph-badge">4 SLOTS REQUIRED</div></div>
+        <div class="pb">
+          <div id="slot-list"></div>
+          <div style="margin-top:14px">
+            <div class="inp-lbl">CRITICAL RISK IDENTIFIED</div>
+            <textarea class="justify-field inp" id="crit-risk" rows="3" placeholder="What is the most critical vulnerability in your current selection?"></textarea>
+          </div>
+          <div style="margin-top:12px">
+            <div class="inp-lbl">STRATEGIC JUSTIFICATION</div>
+            <textarea class="justify-field inp" id="strategy" rows="5" placeholder="Explain the overall survival logic of your selection. Why does this combination work? What does each item protect against?"></textarea>
+          </div>
+          <div class="btn-row">
+            <button class="btn" id="submit-btn" onclick="submitProposal()" disabled>SUBMIT PROPOSAL →</button>
+            <span style="font-family:var(--font-mono);font-size:8px;color:var(--text-3)" id="submit-note">Complete all 4 slots to submit</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════ 04 FEEDBACK ══════════════════════════ -->
+<div id="sec-feedback" class="sec">
+  <div id="fb-empty" class="empty">NO SIMULATION DATA — SUBMIT PROPOSAL TO GENERATE FEEDBACK</div>
+  <div id="fb-container" style="display:none"></div>
+</div>
+
+<!-- ══════════════════════════ 05 LANGUAGE ══════════════════════════ -->
+<div id="sec-language" class="sec">
+  <div class="g2 gap16">
+    <div>
+      <div class="panel">
+        <div class="ph"><div class="ph-title">NEGOTIATION & JUSTIFICATION FRAMES</div><div class="ph-badge">SPEAKING SUPPORT</div></div>
+        <div class="pb" id="lang-frames"></div>
+      </div>
+    </div>
+    <div>
+      <div class="panel">
+        <div class="ph"><div class="ph-title">TECHNICAL VOCABULARY</div><div class="ph-badge">KEY TERMS</div></div>
+        <div class="pb"><table class="raw-table" id="vocab-table"></table></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════ 06 PRESENTATION ══════════════════════ -->
+<div id="sec-presentation" class="sec">
+  <div class="g2 gap16">
+    <div>
+      <div class="panel mb12">
+        <div class="ph"><div class="ph-title">INDIVIDUAL PRESENTATION GUIDE</div><div class="ph-badge">2 MINUTES</div></div>
+        <div class="pb">
+          <div style="font-size:13px;color:var(--text-2);line-height:1.7;margin-bottom:16px">Select <strong style="color:var(--text)">one item</strong> from your team's final configuration. Present it. Your argument must connect the item to your team's overall survival strategy — not merely describe its function.</div>
+          <div id="pres-steps"></div>
+        </div>
+      </div>
+    </div>
+    <div>
+      <div class="panel mb12">
+        <div class="ph"><div class="ph-title">ASSESSMENT RUBRIC</div><div class="ph-badge">5 CRITERIA</div></div>
+        <div class="pb"><table class="raw-table" id="rubric-table"></table></div>
+      </div>
+      <div class="panel">
+        <div class="ph"><div class="ph-title">PREPARATION NOTES</div></div>
+        <div class="pb">
+          <div class="inp-lbl" style="margin-bottom:6px">SELECTED ITEM</div>
+          <input class="inp mb12" id="pres-item" placeholder="Which item are you presenting?">
+          <div class="inp-lbl" style="margin-bottom:6px">YOUR NOTES</div>
+          <textarea class="justify-field inp" id="pres-notes" rows="8" placeholder="Prepare your 2-minute presentation here."></textarea>
+          <div style="font-family:var(--font-mono);font-size:8px;color:var(--text-3);margin-top:6px;text-align:right" id="word-count">0 words</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div><!-- /main -->
+
+<!-- ══ TOAST ══ -->
+<script>
+// ═══════════════════════════
+// DATA
+// ═══════════════════════════
+const ITEMS = [
+  {id:1,name:'Kilopower Fission Reactor',mu:4,desc:'Compact nuclear power unit. 10 kW continuous output. Fuel lifetime: 10+ years. Independent of atmospheric conditions and dust.',tags:['10 kW OUTPUT','DUST-INDEPENDENT','MAINTENANCE: MOD'],tt:['power','dep','risk'],affects:'ES'},
+  {id:2,name:'High-Efficiency Solar Array Field',mu:3,desc:'Deployable photovoltaic array. 8 kW peak output. Performance degrades with dust accumulation without active cleaning provision.',tags:['8 kW PEAK','DUST-SENSITIVE','DEGRADES OVER TIME'],tt:['power','risk','risk'],affects:'ES'},
+  {id:3,name:'Electrostatic Dust Removal System',mu:2,desc:'Surface cleaning grid. Prevents dust accumulation on panels and sensors. No function without exposed solar systems.',tags:['1 kW DRAW','SOLAR DEPENDENCY'],tt:['power','dep'],affects:'EP'},
+  {id:4,name:'Autonomous Regolith Excavator',mu:4,desc:'Robotic excavation unit. Moves 5 m³/hour. Enables terrain modification, berm construction, and potential subsurface access.',tags:['5 kW DRAW','SUBSURFACE CAPABLE','HIGH POWER COST'],tt:['power','bonus','risk'],affects:'EP'},
+  {id:5,name:'Lava Tube Reconnaissance Rover',mu:2,desc:'LIDAR-equipped exploration rover. Maps subsurface void structures. No direct life-support function as a standalone item.',tags:['2 kW DRAW','SUBSURFACE MAPPING'],tt:['power','bonus'],affects:'—'},
+  {id:6,name:'Inflatable Surface Habitat Module',mu:3,desc:'Multi-layer composite habitat for 8 crew. Minimal built-in radiation shielding. High thermal demand on surface.',tags:['RADIATION RISK','HIGH THERMAL LOAD','8 CREW CAPACITY'],tt:['risk','risk','bonus'],affects:'CS'},
+  {id:7,name:'Regolith Shielding Printer',mu:3,desc:'ISRU additive manufacturing. Constructs 2 m regolith shell over habitat in approx. 30 days. Requires stable power.',tags:['4 kW DRAW','30-DAY BUILD TIME','POWER DEPENDENT'],tt:['power','risk','dep'],affects:'RS/EP'},
+  {id:8,name:'Advanced Water Recycling System',mu:3,desc:'Closed-loop purification system. 95% recovery rate. Without this item, water reserves deplete and crew sustainability collapses over time.',tags:['2 kW DRAW','95% RECOVERY','CRITICAL SYSTEM'],tt:['power','bonus','bonus'],affects:'CS'},
+  {id:9,name:'CO₂ Processing Unit',mu:3,desc:'Sabatier reaction + oxygen extraction. Continuous O₂ supply for 8 crew. Filter wear degrades function over time without spare seals.',tags:['3 kW DRAW','CONTINUOUS O₂','SEAL DEPENDENT'],tt:['power','bonus','dep'],affects:'CS'},
+  {id:10,name:'Hydroponic Growth Chamber',mu:3,desc:'Produces 60% of crew food needs. Requires stable power and water input. High energy demand may compete with critical systems.',tags:['3 kW DRAW','60% FOOD SUPPLY','WATER DEPENDENT'],tt:['power','bonus','dep'],affects:'CS'},
+  {id:11,name:'Thermal Regulation System',mu:2,desc:'Habitat temperature stabilisation. Higher energy load for surface structures vs. subsurface habitats. Removes thermal stress penalties.',tags:['2 kW DRAW','THERMAL CONTROL'],tt:['power','bonus'],affects:'EP/CS'},
+  {id:12,name:'Energy Storage Battery Bank',mu:2,desc:'72-hour full backup capacity. Buffers power generation gaps and fluctuations. Not a substitute for primary generation.',tags:['72-HR BACKUP','BUFFER ONLY'],tt:['bonus','risk'],affects:'ES/BC'},
+  {id:13,name:'Mechanical Repair Toolkit & Spares',mu:2,desc:'Comprehensive maintenance kit. Prevents and reverses mechanical degradation. Critical for nuclear reactor upkeep and cascade failure prevention.',tags:['MAINTENANCE CRITICAL','CASCADE PREVENTION'],tt:['bonus','bonus'],affects:'BC'},
+  {id:14,name:'Robotic Maintenance Manipulator',mu:2,desc:'External repairs without EVA. Reduced effectiveness without repair toolkit. Protects crew from surface exposure during maintenance.',tags:['NO-EVA REPAIR','TOOLKIT DEPENDENT'],tt:['bonus','dep'],affects:'BC'},
+  {id:15,name:'Spare Air Filtration & Seal Kit',mu:1,desc:'Replacement seals and filters. Maintains pressurisation reliability and prevents CO₂ unit degradation over mission duration.',tags:['SEAL REPLACEMENT','O₂ SYSTEM SUPPORT'],tt:['bonus','bonus'],affects:'BC/CS'},
+  {id:16,name:'Circadian Lighting & Psych Module',mu:1,desc:'Simulated Earth lighting cycles. Counters long-duration psychological stress. Without it, crew performance degrades from Day 120.',tags:['1 kW DRAW','PSYCH SUPPORT'],tt:['power','bonus'],affects:'CS'},
+  {id:17,name:'High-Bandwidth Communication Array',mu:2,desc:'Earth–Mars communication link. Provides stable delayed transmission and crew morale support. No direct structural survival function.',tags:['COMMS LINK','MORALE EFFECT'],tt:['bonus','bonus'],affects:'CS'},
+  {id:18,name:'Ice Prospecting Ground Radar',mu:2,desc:'Detects subsurface ice deposits. Enables water extraction strategy planning. Limited value without processing capability.',tags:['ICE DETECTION','WATER STRATEGY'],tt:['bonus','dep'],affects:'CS'},
+  {id:19,name:'Pressurised Water Storage Tanks',mu:2,desc:'180-day water reserve for 8 crew. Non-renewable. Without recycling, this is a countdown to water exhaustion, not a long-term solution.',tags:['180-DAY RESERVE','NON-RENEWABLE'],tt:['bonus','risk'],affects:'CS'},
+  {id:20,name:'Emergency Ration Reserve',mu:2,desc:'Full 180-day backup food supply. One-time buffer. Does not address systemic nutritional failure or cascade sustainability collapse.',tags:['180-DAY FOOD','BUFFER ONLY'],tt:['bonus','risk'],affects:'CS'},
+];
+
+const LANG_FRAMES=[
+  {cat:'PRIORITISING',frames:['The way I see it, [item] has to come first because without it nothing else holds up.','If we lose [index], the entire configuration collapses — that\'s non-negotiable.','We can afford to be weak on [X] if and only if we compensate with [Y].']},
+  {cat:'HEDGING RISK',frames:['The risk here is manageable as long as we have [item] covering the gap.','This could turn critical by Day [N] if we don\'t account for the dust degradation.','I\'d be more confident about this if we had [item] as a backup.']},
+  {cat:'CHALLENGING A CHOICE',frames:['That assumes we have enough power to run it — do we actually have the budget for the draw?','What happens on Day 90 when the maintenance cycle kicks in and we have nothing to repair it with?','How is the solar array still generating enough if we haven\'t dealt with dust accumulation?']},
+  {cat:'CONCEDING A TRADE-OFF',frames:['Fair point — that\'s a trade-off we\'d have to accept going in.','I get that [item] is expensive, but the alternative is a 30-day window before [index] fails.','We\'re essentially gambling that [risk] won\'t materialise. Is that a bet we\'re comfortable making?']},
+  {cat:'BUILDING ON AN IDEA',frames:['If we go with that, then we also need [item] — otherwise the dependency isn\'t covered.','That only works if we pair it with [item], otherwise the power draw pushes us into deficit.','Right — and that actually opens up the option of [strategy], which changes the whole picture.']},
+  {cat:'PRESENTING A FINDING',frames:['The feedback data suggests that [index] is the critical failure driver, not [other index].','Based on the Day 62 projection, we\'re looking at a radiation exposure problem, not an energy problem.','The weakest link in our current configuration is [item/index], and here\'s why that matters...']},
+];
+
+const VOCAB=[
+  ['cascade failure','a situation where one system failing triggers other failures in sequence'],
+  ['redundancy','having backup systems so a single failure doesn\'t end the mission'],
+  ['trade-off','accepting a disadvantage in one area to gain an advantage in another'],
+  ['mission viability','whether the colony can survive the full 180-day mission'],
+  ['index threshold','the minimum score a system index must maintain to avoid failure'],
+  ['power budget','the total electricity available and how it\'s distributed between systems'],
+  ['reconfiguration cost','the extra MU penalty for changing a non-locked item after v1'],
+  ['diagnostic feedback','information telling you what is failing and when, not what to do'],
+  ['regolith','the loose surface material (rock, dust, soil) covering the Martian surface'],
+  ['subsurface habitation','living below the surface, inside natural formations or buried structures'],
+];
+
+const PRES_STEPS=[
+  {num:'STEP 01',title:'Name and Function',time:'~15 sec',desc:'State the item\'s name and explain in one clear sentence what problem it solves for the colony.'},
+  {num:'STEP 02',title:'Index Impact',time:'~30 sec',desc:'Identify which survival indices this item affects and explain how. Use specific terms: "This raises our Radiation Safety index by..." or "Without this, Energy Stability degrades..."'},
+  {num:'STEP 03',title:'Strategic Justification',time:'~45 sec',desc:'Why was this item essential to your team\'s overall strategy? What would the Day 180 outcome look like without it? Reference simulation feedback where available.'},
+  {num:'STEP 04',title:'Trade-off Acknowledgement',time:'~30 sec',desc:'What did selecting this item cost you? What capability did you sacrifice by allocating those MU here instead of an alternative?'},
+];
+
+const RUBRIC=[
+  ['Strategic Reasoning','Logically coherent; trade-offs clearly understood','Mostly coherent; trade-offs acknowledged','Argument partially developed','No clear reasoning'],
+  ['Target Discourse','Hedging, justification, concession used naturally','Correct but inconsistent use','Limited use of target frames','Language absent or incorrect'],
+  ['Precision','References specific indices, days, dependencies','References some specific data','General claims only','Vague throughout'],
+  ['Fluency','Confident, sustained, within 2-min window','Minor hesitations; generally fluent','Noticeable pauses; reads from notes','Cannot complete task'],
+  ['Engagement','Connects item explicitly to whole-team strategy','Some connection to strategy','Item presented in isolation','No connection to strategy'],
+];
+
+// ═══════════════════════════
+// STATE
+// ═══════════════════════════
+let S = {selected:[],budget:12,round:1,locked:[],habitation:null,submissions:[],reconfig:0};
+let teacherBudgets = {}; // team-id → budget
+let teacherSlots = 0;
+
+// ═══════════════════════════
+// CHARTS
+// ═══════════════════════════
+function genRadData(){
+  const d=[];
+  for(let i=0;i<180;i++){
+    let v = 1.0 + (Math.sin(i*0.3)*0.08) + ((i%7===0)?0.06:0) - ((i%13===0)?0.04:0);
+    // SPE events
+    if(i>=28&&i<=32) v = 14.2 - Math.abs(i-30)*2.8;
+    else if(i>=83&&i<=87) v = 8.7 - Math.abs(i-85)*1.9;
+    else if(i>=140&&i<=145) v = 11.3 - Math.abs(i-142)*2.1;
+    d.push(Math.max(0.7, Math.round(v*100)/100));
+  }
+  return d;
+}
+function genTempMax(){
+  return Array.from({length:180},(_,i)=>Math.round(-45+18*Math.sin((i-45)*Math.PI/100)+(i%3===0?2:-1)));
+}
+function genTempMin(){
+  return Array.from({length:180},(_,i)=>Math.round(-93+9*Math.sin((i-60)*Math.PI/120)+(i%4===0?1:-2)));
+}
+function genDust(){
+  return Array.from({length:180},(_,i)=>{
+    let v=0.35;
+    if(i>30&&i<55) v=0.35+(i-30)*0.018;
+    else if(i>=55&&i<=75) v=0.73+(i-55)*0.1035;
+    else if(i>75&&i<=95) v=2.8-(i-75)*0.12;
+    else if(i>95&&i<=130) v=0.42+(i-95)*0.004;
+    else if(i>130) v=0.56+(i-130)*0.014;
+    return Math.round(Math.min(3.0,Math.max(0.25,v))*100)/100;
+  });
+}
+
+const SOLS = Array.from({length:180},(_,i)=>i+1);
+const chartOpts = {responsive:true,maintainAspectRatio:false,animation:{duration:600},plugins:{legend:{display:false},tooltip:{mode:'index',intersect:false,bodyFont:{family:'IBM Plex Mono',size:10},titleFont:{family:'Montserrat',size:10,weight:'bold'}}},scales:{x:{ticks:{font:{family:'IBM Plex Mono',size:8},color:'#9999aa',maxTicksLimit:12},grid:{color:'rgba(0,0,0,0.04)'},title:{display:true,text:'SOL',font:{family:'Montserrat',size:9,weight:'700'},color:'#9999aa'}},y:{ticks:{font:{family:'IBM Plex Mono',size:8},color:'#9999aa'},grid:{color:'rgba(0,0,0,0.05)'}}}};
+
+function initCharts(){
+  // Radiation
+  new Chart(document.getElementById('ch-rad'),{type:'line',data:{labels:SOLS,datasets:[{data:genRadData(),borderColor:'#8b1a1a',borderWidth:1.5,fill:true,backgroundColor:'rgba(139,26,26,0.06)',pointRadius:0,tension:.3}]},options:{...chartOpts,plugins:{...chartOpts.plugins,annotation:{}},scales:{...chartOpts.scales,y:{...chartOpts.scales.y,title:{display:true,text:'mSv/day',font:{family:'Montserrat',size:9,weight:'700'},color:'#9999aa'}}}}});
+  // Temperature
+  const tMax=genTempMax(),tMin=genTempMin();
+  new Chart(document.getElementById('ch-temp'),{type:'line',data:{labels:SOLS,datasets:[{label:'Max °C',data:tMax,borderColor:'#c0392b',borderWidth:1.5,fill:false,pointRadius:0,tension:.4},{label:'Min °C',data:tMin,borderColor:'#1a4a8b',borderWidth:1.5,fill:'+1',backgroundColor:'rgba(26,74,139,0.07)',pointRadius:0,tension:.4}]},options:{...chartOpts,plugins:{legend:{display:true,position:'top',labels:{font:{family:'IBM Plex Mono',size:9},color:'#5a5a72',boxWidth:12}},tooltip:{mode:'index',intersect:false}},scales:{...chartOpts.scales,y:{...chartOpts.scales.y,title:{display:true,text:'°C',font:{family:'Montserrat',size:9,weight:'700'},color:'#9999aa'}}}}});
+  // Dust
+  const dustData=genDust();
+  new Chart(document.getElementById('ch-dust'),{type:'line',data:{labels:SOLS,datasets:[{data:dustData,borderColor:'#c07000',borderWidth:1.5,fill:true,backgroundColor:'rgba(192,112,0,0.08)',pointRadius:0,tension:.4},{data:SOLS.map(()=>1.0),borderColor:'rgba(192,57,43,0.3)',borderWidth:1,borderDash:[4,3],fill:false,pointRadius:0,label:'τ=1.0 threshold'}]},options:{...chartOpts,plugins:{legend:{display:false}},scales:{...chartOpts.scales,y:{...chartOpts.scales.y,title:{display:true,text:'Optical Depth τ',font:{family:'Montserrat',size:9,weight:'700'},color:'#9999aa'}}}}});
+  // Solar irradiance
+  new Chart(document.getElementById('ch-solar'),{type:'bar',data:{labels:['Earth avg','Mars avg','Mars peri.','Mars aph.','Site clear','Site τ=2.8'],datasets:[{data:[1361,589,717,493,575,35],backgroundColor:['#dde0e6','#8b1a1a','#c0392b','#1a4a8b','#1a7a4a','#9999aa'],borderRadius:2}]},options:{responsive:true,maintainAspectRatio:false,animation:{duration:500},plugins:{legend:{display:false},tooltip:{bodyFont:{family:'IBM Plex Mono',size:10}}},scales:{x:{ticks:{font:{family:'IBM Plex Mono',size:7},color:'#9999aa',maxRotation:30},grid:{display:false}},y:{ticks:{font:{family:'IBM Plex Mono',size:8},color:'#9999aa'},grid:{color:'rgba(0,0,0,0.05)'},title:{display:true,text:'W/m²',font:{family:'Montserrat',size:8,weight:'700'},color:'#9999aa'}}}}});
+  // Atmospheric composition
+  new Chart(document.getElementById('ch-atmos'),{type:'doughnut',data:{labels:['CO₂ 95.32%','N₂ 2.70%','Ar 1.60%','O₂ 0.13%','CO 0.08%','Other 0.17%'],datasets:[{data:[95.32,2.70,1.60,0.13,0.08,0.17],backgroundColor:['#8b1a1a','#1a4a8b','#5a5a72','#1a7a4a','#c07000','#aaaabc'],borderWidth:1,borderColor:'#fff'}]},options:{responsive:true,maintainAspectRatio:false,animation:{duration:500},plugins:{legend:{display:true,position:'right',labels:{font:{family:'IBM Plex Mono',size:8},color:'#5a5a72',boxWidth:10,padding:6}},tooltip:{bodyFont:{family:'IBM Plex Mono',size:10}}}}});
+}
+
+// ═══════════════════════════
+// SIMULATION ENGINE
+// ═══════════════════════════
+const BASE={RS:1.5,ES:1.0,EP:1.5,BC:1.0,CS:1.5};
+const THRESH={RS:2.5,ES:2.5,EP:2.0,BC:2.0,CS:2.5};
+const FLOORS={RS:1.5,ES:1.5,EP:1.0,BC:1.0,CS:2.0};
+const WEIGHTS={RS:.25,ES:.20,EP:.20,BC:.15,CS:.20};
+const IMODS={
+  1:{RS:0,ES:2.0,EP:0,BC:-.5,CS:0,pOut:10,pDraw:0},
+  2:{RS:0,ES:1.5,EP:0,BC:0,CS:0,pOut:8,pDraw:0,deg:true},
+  3:{RS:0,ES:0,EP:0,BC:0,CS:0,pOut:0,pDraw:1},
+  4:{RS:0,ES:0,EP:1.5,BC:0,CS:0,pOut:0,pDraw:5},
+  5:{RS:0,ES:0,EP:0,BC:0,CS:0,pOut:0,pDraw:2},
+  6:{RS:-1.0,ES:0,EP:-.5,BC:0,CS:1.0,pOut:0,pDraw:0},
+  7:{RS:1.5,ES:0,EP:1.0,BC:0,CS:0,pOut:0,pDraw:4},
+  8:{RS:0,ES:0,EP:0,BC:0,CS:2.0,pOut:0,pDraw:2},
+  9:{RS:0,ES:0,EP:0,BC:0,CS:1.5,pOut:0,pDraw:3},
+  10:{RS:0,ES:0,EP:0,BC:0,CS:1.0,pOut:0,pDraw:3},
+  11:{RS:0,ES:0,EP:1.0,BC:0,CS:.5,pOut:0,pDraw:2},
+  12:{RS:0,ES:.5,EP:0,BC:.5,CS:0,pOut:0,pDraw:0},
+  13:{RS:0,ES:0,EP:0,BC:2.0,CS:0,pOut:0,pDraw:0},
+  14:{RS:0,ES:0,EP:0,BC:1.0,CS:0,pOut:0,pDraw:0},
+  15:{RS:0,ES:0,EP:0,BC:1.0,CS:.3,pOut:0,pDraw:0},
+  16:{RS:0,ES:0,EP:0,BC:0,CS:.5,pOut:0,pDraw:1},
+  17:{RS:0,ES:0,EP:0,BC:0,CS:.3,pOut:0,pDraw:0},
+  18:{RS:0,ES:0,EP:0,BC:0,CS:.5,pOut:0,pDraw:0},
+  19:{RS:0,ES:0,EP:0,BC:0,CS:1.0,pOut:0,pDraw:0},
+  20:{RS:0,ES:0,EP:0,BC:0,CS:.5,pOut:0,pDraw:0},
+};
+
+function simulate(ids){
+  const has=id=>ids.includes(id);
+  let pOut=0,pDraw=0;
+  ids.forEach(id=>{pOut+=IMODS[id].pOut;pDraw+=IMODS[id].pDraw;});
+  const deficit=Math.max(0,pDraw-pOut);
+  let sc={...BASE};
+  ids.forEach(id=>{const m=IMODS[id];sc.RS+=m.RS;sc.ES+=m.ES;sc.EP+=m.EP;sc.BC+=m.BC;sc.CS+=m.CS;});
+  if(deficit>0) sc.ES-=deficit*.5;
+  if(has(1)&&!has(11)) sc.EP-=.3;
+  if(has(4)&&has(5)){sc.RS+=sc.ES>=2.5?2.0:.5;sc.EP+=sc.ES>=2.5?1.5:.3;}
+  if(has(6)) sc.RS-=.3;
+  if(has(10)&&!has(8)) sc.CS-=.7;
+  if(has(1)&&has(13)) sc.BC+=.5;
+  if(has(14)&&!has(13)) sc.BC-=.7;
+  Object.keys(sc).forEach(k=>sc[k]=Math.max(.5,Math.round(sc[k]*100)/100));
+  const mv=Math.round(Object.keys(WEIGHTS).reduce((s,k)=>s+sc[k]*WEIGHTS[k],0)*100)/100;
+  let failDay=null,failIdx=null,failReason=null;
+  Object.keys(sc).forEach(k=>{
+    if(sc[k]<THRESH[k]){
+      const d=Math.max(0,Math.round(((sc[k]-FLOORS[k])/.2)*15));
+      if(failDay===null||d<failDay){failDay=d;failIdx=k;}
+    }
+  });
+  if(has(2)&&!has(3)){
+    const sd=60;
+    if(failDay===null||sd<failDay){failDay=sd;failIdx='ES';failReason='Solar output degrading — atmospheric dust accumulation without cleaning provision';}
+  }
+  if(has(6)&&!has(4)&&!has(7)){
+    const rd=27;
+    if(failDay===null||rd<failDay){failDay=rd;failIdx='RS';failReason='Surface habitat without radiation shielding — cumulative exposure exceeds 50 mSv threshold';}
+  }
+  if(!has(8)){
+    const wd=90;
+    if(failDay===null||wd<failDay){failDay=wd;failIdx='CS';failReason='No water recycling — crew water supply non-renewable, Crew Sustainability in decline from Day 30';}
+  }
+  return {sc,mv,failDay,failIdx,failReason,pOut,pDraw,deficit,
+    hasSolar:has(2),hasDust:has(3),hasSub:has(4)&&has(5),hasHab:has(6),hasShield:has(7),hasWater:has(8),hasRepair:has(13),hasReactor:has(1)};
+}
+
+const IDX_NAMES={RS:'Radiation Safety',ES:'Energy Stability',EP:'Environmental Protection',BC:'Backup & Repair',CS:'Crew Sustainability'};
+
+function buildFeedback(r,round,team,hab){
+  const stCls=r.failDay?'fail':r.mv>=3.0?'pass':'warn';
+  const stTxt=r.failDay?'NON-VIABLE':r.mv>=3.0?'CONDITIONALLY VIABLE':'BELOW THRESHOLD';
+  const idxRows=Object.keys(THRESH).map(k=>{
+    const sc=r.sc[k],th=THRESH[k];
+    const pct=Math.min((sc/5)*100,100);
+    const cls=sc>=th?'ok':sc>=FLOORS[k]?'warn':'fail';
+    const lbl=sc>=th?'NOMINAL':sc>=FLOORS[k]?'CRITICAL':'FAILURE';
+    const col=cls==='ok'?'var(--green)':cls==='warn'?'var(--orange)':'var(--red)';
+    return `<div class="idx-row">
+      <div class="idx-name">${IDX_NAMES[k]}</div>
+      <div class="idx-score ${cls}">${sc.toFixed(2)}</div>
+      <div class="idx-thresh">≥${th}</div>
+      <div class="idx-bar-wrap"><div class="idx-bar" style="width:${pct}%;background:${col}"></div></div>
+      <div class="idx-lbl" style="color:${col}">${lbl}</div>
+    </div>`;
+  }).join('');
+  const lines=[];
+  if(r.deficit>0) lines.push({c:'crit',t:`Power demand exceeds generation by ${r.deficit} kW. Energy Stability penalty applied at Day 0. Systems requiring ≥${r.deficit} kW additional will operate below rated specification.`});
+  if(r.hasSub) lines.push({c:'',t:'Items 04 and 05 detected together. Subsurface mapping and excavation capacity confirmed. Underground transition window: estimated Day 40–45 depending on terrain findings.'});
+  if(r.hasSolar&&!r.hasDust) lines.push({c:'crit',t:'Solar Array selected without dust management provision. Optical depth τ data indicates dust accumulation at this site. Output projected −0.3 ES per 30 sols. Threshold breach: Day 60.'});
+  if(r.hasHab&&!r.hasShield&&!r.hasSub) lines.push({c:'crit',t:'Surface habitat without shielding detected. Radiation dose rate at this altitude: ~1.05 mSv/day baseline + SPE events. RS at 1.5 — below survival threshold at Day 0. Shielding or habitation change required before Day 27.'});
+  if(!r.hasWater) lines.push({c:'crit',t:'No water recycling system in configuration. Non-renewable reserve depletes. Crew Sustainability projected to decline at −0.5 per 30 days from Day 30. Critical threshold: Day 90.'});
+  if(r.hasReactor&&!r.hasRepair) lines.push({c:'',t:'Kilopower Reactor selected without maintenance provision. Reactor degradation cycle begins Day 90. BC at 0.5 — insufficient to prevent cascade effects on primary power generation.'});
+  if(r.hasSub&&r.sc.BC<2.0) lines.push({c:'',t:'Subsurface configuration produces strong RS and EP indices. Primary unresolved vulnerability: Backup & Repair Capacity remains below threshold. Single component failure risk remains elevated.'});
+  if(r.mv>=3.0&&!r.failDay) lines.push({c:'',t:`Mission Viability score ${r.mv} meets minimum threshold at Day 0. No immediate critical failure pathway identified. Monitor index trajectories across revision rounds.`});
+  const failBlock=r.failDay!==null?`<div class="fail-day"><div><div class="fail-day-lbl">PROJECTED CRITICAL EVENT — ${IDX_NAMES[r.failIdx]}</div><div style="font-family:var(--font-mono);font-size:9px;color:rgba(192,57,43,.6);margin-top:3px">${r.failReason||'Index below catastrophic floor'}</div></div><div class="fail-day-val">DAY ${r.failDay}</div></div>`:'' ;
+  return `<div class="fb-report">
+    <div class="fb-hdr">
+      <div><div class="fb-title">ARES COMMAND — SIMULATION REPORT ${['V1','V2','V3'][round-1]}</div>
+      <div class="fb-meta">TEAM: ${team||'—'} | SUBMISSION: ${['V1','V2','V3'][round-1]} | HABITATION: ${(hab||'—').toUpperCase()} | MV: ${r.mv.toFixed(2)}</div></div>
+      <div class="fb-status ${stCls}">${stTxt}</div>
+    </div>
+    <div style="font-family:var(--font-mono);font-size:8px;color:var(--text-3);letter-spacing:0.2em;text-transform:uppercase;margin-bottom:8px">POWER BALANCE</div>
+    <div class="g3 gap12 mb12" style="grid-template-columns:repeat(3,1fr)">
+      <div class="pwr-box"><div class="pwr-lbl">GENERATION</div><div class="pwr-val" style="color:var(--green)">${r.pOut} kW</div></div>
+      <div class="pwr-box"><div class="pwr-lbl">DEMAND</div><div class="pwr-val" style="color:${r.pDraw<=r.pOut?'var(--orange)':'var(--red)'}">${r.pDraw} kW</div></div>
+      <div class="pwr-box"><div class="pwr-lbl">MARGIN</div><div class="pwr-val" style="color:${r.deficit===0?'var(--green)':'var(--red)'}">${r.deficit===0?'+'+(r.pOut-r.pDraw):'-'+r.deficit} kW</div></div>
+    </div>
+    <div style="font-family:var(--font-mono);font-size:8px;color:var(--text-3);letter-spacing:0.2em;text-transform:uppercase;margin-bottom:8px">INDEX SCORES AT DAY 0</div>
+    ${idxRows}
+    <div class="divider"></div>
+    <div style="display:grid;grid-template-columns:1fr 160px;gap:16px;align-items:center">
+      <div><div style="font-family:var(--font-mono);font-size:8px;color:var(--text-3);letter-spacing:0.2em;text-transform:uppercase;margin-bottom:12px">DIAGNOSTIC OBSERVATIONS</div>
+      ${lines.map(l=>`<div class="fb-line ${l.c}">${l.t}</div>`).join('')}</div>
+      <div class="mv-box"><div class="mv-lbl">MISSION VIABILITY</div><div class="mv-val ${r.mv>=3.0?'text-green':'text-red'}">${r.mv.toFixed(2)}</div><div class="mv-thresh">THRESHOLD: 3.00</div></div>
+    </div>
+    ${failBlock}
+  </div>`;
+}
+
+// ═══════════════════════════
+// RENDER
+// ═══════════════════════════
+function renderEquipment(){
+  document.getElementById('item-grid').innerHTML=ITEMS.map(item=>{
+    const sel=S.selected.includes(item.id);
+    const dis=!sel&&S.selected.length>=4;
+    const tags=item.tags.map((t,i)=>`<span class="tag tag-${item.tt[i]}">${t}</span>`).join('');
+    return `<div class="item-card ${sel?'selected':''} ${dis?'disabled':''}" onclick="toggleItem(${item.id})" id="ic-${item.id}">
+      <div class="sel-dot">✓</div>
+      <div class="item-hdr">
+        <div><div class="item-num">ITEM ${String(item.id).padStart(2,'0')} · ${item.affects}</div><div class="item-name">${item.name}</div></div>
+        <div class="item-mu">${item.mu}<span>MU</span></div>
+      </div>
+      <div class="item-body"><div class="item-desc">${item.desc}</div><div class="item-tags">${tags}</div></div>
+    </div>`;
+  }).join('');
+}
+
+function renderSlots(){
+  document.getElementById('slot-list').innerHTML=[1,2,3,4].map(n=>{
+    const id=S.selected[n-1];
+    const item=id?ITEMS.find(i=>i.id===id):null;
+    const locked=id&&S.locked.includes(id);
+    return `<div class="slot-row ${item?'filled':''} ${locked?'locked':''}">
+      <div class="slot-num">0${n}</div>
+      <div>${item?`<div class="slot-name">${item.name}</div>${locked?'<div class="lock-badge">LOCKED</div>':''}`:`<div class="slot-empty">Empty — select from Equipment</div>`}</div>
+      <div class="slot-cost">${item?item.mu+' MU':'—'}</div>
+    </div>`;
+  }).join('');
+}
+
+function renderBudget(){
+  const used=S.selected.reduce((s,id)=>{const it=ITEMS.find(i=>i.id===id);return s+(it?it.mu:0);},0)+S.reconfig;
+  const pct=Math.min((used/S.budget)*100,100);
+  const over=used>S.budget;
+  document.getElementById('mu-used').textContent=used;
+  document.getElementById('mu-total').textContent=S.budget;
+  document.getElementById('mu-used-eq').textContent=used;
+  const bar=document.getElementById('bud-bar');
+  bar.style.width=pct+'%';
+  bar.className='bud-bar'+(over?' over':'');
+  const bw=document.getElementById('bud-warn');
+  if(over){bw.style.display='flex';document.getElementById('bud-warn-text').textContent=`Budget exceeded by ${used-S.budget} MU.`;}
+  else bw.style.display='none';
+  const btn=document.getElementById('submit-btn');
+  const note=document.getElementById('submit-note');
+  const ready=S.selected.length===4&&!over&&S.habitation;
+  btn.disabled=!ready;
+  if(S.selected.length<4) note.textContent=`Select ${4-S.selected.length} more item(s)`;
+  else if(!S.habitation) note.textContent='Select habitation strategy';
+  else if(over) note.textContent='Budget exceeded';
+  else note.textContent='Ready to submit';
+}
+
+function renderRounds(){
+  const rw=document.getElementById('round-wrap');
+  rw.innerHTML=['V1','V2','V3'].map((r,i)=>{
+    const n=i+1;
+    const c=n<S.round?'done':n===S.round?'active':'';
+    return `${i>0?'<div class="rd-line"></div>':''}<div class="rd-dot ${c}">${r}</div>`;
+  }).join('');
+  const badges=['V1 — INITIAL','V2 — REVISION','V3 — FINAL'];
+  document.getElementById('round-badge').textContent=badges[S.round-1]||'COMPLETE';
+  document.getElementById('round-display').textContent='ROUND: V'+S.round;
+  document.getElementById('lock-warn').style.display=S.round>1?'flex':'none';
+}
+
+function renderLanguage(){
+  document.getElementById('lang-frames').innerHTML=LANG_FRAMES.map(c=>`
+    <div class="frame-cat"><div class="frame-cat-title">${c.cat}</div>
+    ${c.frames.map(f=>`<div class="frame-item">"${f}"</div>`).join('')}</div>`).join('');
+  document.getElementById('vocab-table').innerHTML=
+    `<thead><tr><th>TERM</th><th>MEANING</th></tr></thead><tbody>`+
+    VOCAB.map(v=>`<tr><td style="color:var(--crimson);font-family:var(--font-mono);font-size:10px">${v[0]}</td><td>${v[1]}</td></tr>`).join('')+`</tbody>`;
+}
+
+function renderPresentation(){
+  document.getElementById('pres-steps').innerHTML=PRES_STEPS.map(s=>`
+    <div class="pres-step"><div class="pres-step-num">${s.num}</div><div class="pres-step-title">${s.title}</div>
+    <div class="pres-step-time">${s.time}</div><div class="pres-step-desc">${s.desc}</div></div>`).join('');
+  document.getElementById('rubric-table').innerHTML=
+    `<thead><tr><th>CRITERION</th><th>4</th><th>3</th><th>2</th><th>1</th></tr></thead><tbody>`+
+    RUBRIC.map(r=>`<tr>${r.map((c,i)=>`<td ${i===0?'style="color:var(--crimson);font-family:var(--font-mono);font-size:10px;font-weight:600"':''}>${c}</td>`).join('')}</tr>`).join('')+`</tbody>`;
+  document.getElementById('pres-notes').addEventListener('input',function(){
+    const w=this.value.trim().split(/\s+/).filter(x=>x).length;
+    document.getElementById('word-count').textContent=w+' words';
+  });
+}
+
+// ═══════════════════════════
+// INTERACTIONS
+// ═══════════════════════════
+function toggleItem(id){
+  if(S.locked.includes(id)){showToast('ITEM LOCKED','err');return;}
+  if(S.selected.includes(id)) S.selected=S.selected.filter(x=>x!==id);
+  else{
+    if(S.selected.length>=4){showToast('MAX 4 ITEMS — deselect one first','err');return;}
+    S.selected.push(id);
+  }
+  updateUI();
+}
+function clearSel(){S.selected=S.selected.filter(id=>S.locked.includes(id));updateUI();showToast('Selection cleared');}
+function selHab(type,el){S.habitation=type;document.querySelectorAll('.hab-opt').forEach(e=>e.classList.remove('selected'));el.classList.add('selected');renderBudget();}
+function onBudgetChange(){S.budget=parseInt(document.getElementById('budget-sel').value);renderBudget();}
+function onTeamIdChange(){
+  const tid=document.getElementById('team-id').value.trim().toUpperCase();
+  document.getElementById('team-display').textContent='TEAM: '+(tid||'—');
+  if(tid&&teacherBudgets[tid]!==undefined){
+    const b=teacherBudgets[tid];
+    document.getElementById('budget-sel').value=b;
+    S.budget=b;
+    document.getElementById('teacher-budget-note').style.display='flex';
+    document.getElementById('teacher-budget-text').textContent=`Budget auto-assigned by teacher: ${b} MU`;
+    renderBudget();
+  } else {
+    document.getElementById('teacher-budget-note').style.display='none';
+  }
+}
+function submitProposal(){
+  const team=document.getElementById('team-id').value||'—';
+  const result=simulate(S.selected);
+  const html=buildFeedback(result,S.round,team,S.habitation);
+  document.getElementById('fb-empty').style.display='none';
+  const c=document.getElementById('fb-container');
+  c.style.display='block';
+  c.innerHTML=html+c.innerHTML;
+  S.submissions.push({round:S.round,selected:[...S.selected],result});
+  if(S.round===1) S.locked=S.selected.slice(0,2);
+  if(S.round<3) S.round++;
+  else{document.getElementById('submit-btn').disabled=true;document.getElementById('submit-note').textContent='Maximum 3 rounds reached';}
+  renderRounds();renderSlots();
+  showSec('feedback');
+  showToast(`PROPOSAL V${S.submissions.length} SUBMITTED`);
+}
+
+// ═══════════════════════════
+// TEACHER DASHBOARD
+// ═══════════════════════════
+const TEACHER_PIN='ARES';
+let teacherUnlocked=false;
+
+function openTeacher(){document.getElementById('teacher-modal').classList.add('open');renderTeamSlots();}
+function closeTeacher(){document.getElementById('teacher-modal').classList.remove('open');}
+function checkPin(){
+  const v=document.getElementById('pin-input').value;
+  const ok=v===TEACHER_PIN;
+  const st=document.getElementById('pin-status');
+  const tc=document.getElementById('teacher-content');
+  if(ok){st.className='pin-status ok';st.textContent='UNLOCKED';tc.style.display='block';teacherUnlocked=true;}
+  else{st.className='pin-status bad';st.textContent='LOCKED';tc.style.display='none';}
+}
+function renderTeamSlots(){
+  if(!teacherUnlocked) return;
+  const el=document.getElementById('team-slots');
+  if(teacherSlots===0) teacherSlots=4;
+  let html='';
+  for(let i=0;i<teacherSlots;i++){
+    const key='team_'+i;
+    html+=`<div class="team-row">
+      <input class="inp" id="tid-${i}" type="text" placeholder="e.g. ALPHA-0${i+1}" value="${window['_tid_'+i]||''}">
+      <select class="inp" id="tbud-${i}">
+        <option value="13" ${window['_tbud_'+i]==13?'selected':''}>13 MU</option>
+        <option value="12" ${!window['_tbud_'+i]||window['_tbud_'+i]==12?'selected':''}>12 MU</option>
+        <option value="11" ${window['_tbud_'+i]==11?'selected':''}>11 MU</option>
+      </select>
+      <span style="font-family:var(--font-mono);font-size:9px;color:var(--text-3);padding-top:10px">TEAM ${i+1}</span>
+    </div>`;
+  }
+  el.innerHTML=html;
+}
+function addTeamSlot(){teacherSlots++;renderTeamSlots();}
+function broadcastBudgets(){
+  if(!teacherUnlocked) return;
+  teacherBudgets={};
+  for(let i=0;i<teacherSlots;i++){
+    const tid=document.getElementById('tid-'+i)?.value.trim().toUpperCase();
+    const bud=parseInt(document.getElementById('tbud-'+i)?.value||12);
+    window['_tid_'+i]=tid;
+    window['_tbud_'+i]=bud;
+    if(tid) teacherBudgets[tid]=bud;
+  }
+  const lines=Object.entries(teacherBudgets).map(([k,v])=>`${k}: ${v} MU`).join(' · ');
+  document.getElementById('broadcast-info').textContent=`ACTIVE: ${lines||'No teams configured'} — Students will see auto-assigned budget when they enter their Team ID.`;
+  showToast('BUDGETS BROADCAST TO '+(Object.keys(teacherBudgets).length)+' TEAMS');
+  closeTeacher();
+}
+// close on overlay click
+document.getElementById('teacher-modal').addEventListener('click',function(e){if(e.target===this) closeTeacher();});
+
+// ═══════════════════════════
+// NAVIGATION
+// ═══════════════════════════
+function showSec(name){
+  document.querySelectorAll('.sec').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('sec-'+name).classList.add('active');
+  const tabs=['site','equipment','proposal','feedback','language','presentation'];
+  document.querySelectorAll('.nav-tab')[tabs.indexOf(name)]?.classList.add('active');
+  window.scrollTo(0,0);
+}
+function updateUI(){renderEquipment();renderSlots();renderBudget();document.getElementById('sel-count').textContent=S.selected.length;}
+
+let _tt;
+function showToast(msg,type){
+  document.querySelector('.toast')?.remove();clearTimeout(_tt);
+  const t=document.createElement('div');t.className='toast'+(type==='err'?' err':'');t.textContent=msg;
+  document.body.appendChild(t);_tt=setTimeout(()=>t.remove(),3000);
+}
+
+// ═══════════════════════════
+// INIT
+// ═══════════════════════════
+function init(){
+  renderEquipment();renderSlots();renderBudget();renderRounds();renderLanguage();renderPresentation();
+  // Charts on next tick to ensure canvas is visible
+  setTimeout(initCharts,100);
+}
+init();
+</script>
+</body>
+</html>

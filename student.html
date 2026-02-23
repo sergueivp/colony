@@ -1,0 +1,2400 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description"
+    content="ARES COMMAND — Mars Colony Simulation — EFL University Lesson 7 Interactive Dashboard">
+  <title>ARES COMMAND — OPERATION: OLYMPUS FOOTHOLD</title>
+  <link
+    href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=Nunito+Sans:wght@300;400;600;700;800&family=Montserrat:wght@400;600;700;800;900&display=swap"
+    rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+  <style>
+    :root {
+      --bg: #f0f0f0;
+      --bg-panel: #ffffff;
+      --bg-card: #f8f8f8;
+      --border: #dde0e6;
+      --crimson: #8b1a1a;
+      --crimson-dark: #6e1414;
+      --crimson-light: #b22222;
+      --crimson-pale: rgba(139, 26, 26, 0.07);
+      --red: #c0392b;
+      --red-pale: rgba(192, 57, 43, 0.08);
+      --green: #1a7a4a;
+      --green-pale: rgba(26, 122, 74, 0.08);
+      --blue: #1a4a8b;
+      --orange: #c07000;
+      --text: #1a1a2e;
+      --text-2: #5a5a72;
+      --text-3: #9999aa;
+      --font-mono: 'IBM Plex Mono', monospace;
+      --font-disp: 'Montserrat', sans-serif;
+      --font-body: 'Nunito Sans', sans-serif;
+      --shadow: 0 1px 4px rgba(0, 0, 0, 0.07);
+      --shadow-md: 0 2px 12px rgba(0, 0, 0, 0.10);
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-body);
+      min-height: 100vh;
+      overflow-x: hidden
+    }
+
+    /* ── HEADER ── */
+    .hdr {
+      background: var(--crimson);
+      border-bottom: 3px solid var(--crimson-dark);
+      position: sticky;
+      top: 0;
+      z-index: 200
+    }
+
+    .hdr-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 28px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.12)
+    }
+
+    .mission-id {
+      font-family: var(--font-disp);
+      font-size: 13px;
+      font-weight: 800;
+      color: #fff;
+      letter-spacing: 0.1em;
+      text-transform: uppercase
+    }
+
+    .mission-id span {
+      font-weight: 400;
+      color: rgba(255, 255, 255, 0.6);
+      font-size: 11px
+    }
+
+    .hdr-right {
+      display: flex;
+      align-items: center;
+      gap: 20px
+    }
+
+    .status-row {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: rgba(255, 255, 255, 0.65)
+    }
+
+    .dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #4ade80;
+      box-shadow: 0 0 6px #4ade80;
+      animation: blink 2s infinite
+    }
+
+    @keyframes blink {
+
+      0%,
+      100% {
+        opacity: 1
+      }
+
+      50% {
+        opacity: .3
+      }
+    }
+
+    @keyframes pulse-red {
+      0% {
+        text-shadow: 0 0 0px var(--red);
+        color: #fff;
+      }
+
+      50% {
+        text-shadow: 0 0 10px var(--red);
+        color: #ffcccc;
+      }
+
+      100% {
+        text-shadow: 0 0 0px var(--red);
+        color: #fff;
+      }
+    }
+
+    .sol {
+      color: #fff;
+      font-weight: 600
+    }
+
+    .teacher-btn {
+      background: rgba(255, 255, 255, 0.12);
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      color: #fff;
+      font-family: var(--font-disp);
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      padding: 7px 16px;
+      cursor: pointer;
+      text-transform: uppercase;
+      transition: all .2s
+    }
+
+    .teacher-btn:hover {
+      background: rgba(255, 255, 255, 0.22)
+    }
+
+    .nav {
+      display: flex
+    }
+
+    .nav-tab {
+      padding: 10px 20px;
+      font-family: var(--font-disp);
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      cursor: pointer;
+      border: none;
+      background: transparent;
+      color: rgba(255, 255, 255, 0.45);
+      border-right: 1px solid rgba(255, 255, 255, 0.1);
+      transition: all .2s;
+      position: relative
+    }
+
+    .nav-tab:hover {
+      color: rgba(255, 255, 255, .85);
+      background: rgba(0, 0, 0, .15)
+    }
+
+    .nav-tab.active {
+      color: #fff;
+      background: rgba(0, 0, 0, .22)
+    }
+
+    .nav-tab.active::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: #fff
+    }
+
+    /* ── LAYOUT ── */
+    .main {
+      max-width: 1440px;
+      margin: 0 auto;
+      padding: 24px
+    }
+
+    .sec {
+      display: none
+    }
+
+    .sec.active {
+      display: block
+    }
+
+    .g2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px
+    }
+
+    .g3 {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 16px
+    }
+
+    .g4 {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px
+    }
+
+    .mb12 {
+      margin-bottom: 12px
+    }
+
+    .mb20 {
+      margin-bottom: 20px
+    }
+
+    .mb24 {
+      margin-bottom: 24px
+    }
+
+    /* ── PANEL ── */
+    .panel {
+      background: var(--bg-panel);
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      position: relative
+    }
+
+    .panel::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: var(--crimson)
+    }
+
+    .ph {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 16px;
+      border-bottom: 1px solid var(--border);
+      background: var(--bg-card)
+    }
+
+    .ph-title {
+      font-family: var(--font-disp);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--text)
+    }
+
+    .ph-badge {
+      font-family: var(--font-mono);
+      font-size: 8px;
+      color: var(--text-3);
+      background: var(--bg);
+      border: 1px solid var(--border);
+      padding: 2px 7px;
+      letter-spacing: 0.08em
+    }
+
+    .pb {
+      padding: 16px
+    }
+
+    /* ── PLANET CARDS ── */
+    .planet-card {
+      background: var(--bg-panel);
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow-md);
+      overflow: hidden
+    }
+
+    .planet-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: var(--crimson)
+    }
+
+    .planet-img-wrap {
+      position: relative;
+      height: 240px;
+      overflow: hidden;
+      background: #1a0505
+    }
+
+    .planet-img-wrap img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      transition: transform .4s
+    }
+
+    .planet-card:hover .planet-img-wrap img {
+      transform: scale(1.03)
+    }
+
+    .planet-img-top {
+      position: absolute;
+      top: 10px;
+      left: 12px;
+      font-family: var(--font-mono);
+      font-size: 8px;
+      color: rgba(255, 255, 255, 0.55);
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      background: rgba(0, 0, 0, .45);
+      padding: 3px 8px
+    }
+
+    .planet-img-bottom {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      padding: 12px 16px;
+      background: linear-gradient(transparent, rgba(0, 0, 0, .75))
+    }
+
+    .planet-img-name {
+      font-family: var(--font-disp);
+      font-size: 22px;
+      font-weight: 900;
+      color: #fff;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      line-height: 1
+    }
+
+    .planet-img-sub {
+      font-family: var(--font-mono);
+      font-size: 9px;
+      color: rgba(255, 255, 255, .65);
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      margin-top: 3px
+    }
+
+    .planet-params {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      border-top: 1px solid var(--border)
+    }
+
+    .pp-col {
+      padding: 14px 16px;
+      border-right: 1px solid var(--border)
+    }
+
+    .pp-col:last-child {
+      border-right: none
+    }
+
+    .pp-label {
+      font-family: var(--font-mono);
+      font-size: 7px;
+      color: var(--text-3);
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 5px
+    }
+
+    .pp-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 4px 0;
+      border-bottom: 1px solid var(--border);
+      font-family: var(--font-mono);
+      font-size: 9px
+    }
+
+    .pp-row:last-child {
+      border-bottom: none
+    }
+
+    .pp-key {
+      color: var(--text-2)
+    }
+
+    .pp-val {
+      color: var(--text);
+      font-weight: 600
+    }
+
+    .pp-val.red {
+      color: var(--red)
+    }
+
+    .pp-val.grn {
+      color: var(--green)
+    }
+
+    .pp-val.org {
+      color: var(--orange)
+    }
+
+    /* ── DATA SECTION HEADER ── */
+    .data-hdr {
+      padding: 10px 16px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-left: 4px solid var(--crimson);
+      margin-bottom: 16px
+    }
+
+    .data-hdr-title {
+      font-family: var(--font-disp);
+      font-size: 13px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--text)
+    }
+
+    .data-hdr-source {
+      font-family: var(--font-mono);
+      font-size: 8px;
+      color: var(--text-3);
+      margin-top: 4px;
+      letter-spacing: 0.06em
+    }
+
+    /* ── CHART PANELS ── */
+    .chart-fn {
+      font-family: var(--font-mono);
+      font-size: 8px;
+      color: var(--text-3);
+      line-height: 1.5;
+      margin-top: 10px;
+      padding-top: 8px;
+      border-top: 1px solid var(--border);
+      letter-spacing: 0.04em
+    }
+
+    .chart-stat-row {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 10px
+    }
+
+    .chart-stat {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      padding: 6px 12px;
+      flex: 1;
+      min-width: 80px
+    }
+
+    .chart-stat-val {
+      font-family: var(--font-mono);
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--crimson);
+      line-height: 1
+    }
+
+    .chart-stat-lbl {
+      font-family: var(--font-mono);
+      font-size: 8px;
+      color: var(--text-3);
+      margin-top: 3px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase
+    }
+
+    /* ── RAW DATA TABLES ── */
+    .raw-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-family: var(--font-body);
+      font-size: 12px
+    }
+
+    .raw-table th {
+      font-family: var(--font-disp);
+      font-size: 8px;
+      font-weight: 700;
+      letter-spacing: 0.15em;
+      color: var(--text-3);
+      text-transform: uppercase;
+      padding: 8px 10px;
+      border-bottom: 2px solid var(--border);
+      text-align: left;
+      background: var(--bg-card)
+    }
+
+    .raw-table td {
+      padding: 7px 10px;
+      border-bottom: 1px solid var(--border);
+      color: var(--text-2);
+      vertical-align: top
+    }
+
+    .raw-table tr:last-child td {
+      border-bottom: none
+    }
+
+    .raw-table tr:hover td {
+      background: var(--crimson-pale)
+    }
+
+    .raw-table td.val {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--text);
+      font-weight: 600
+    }
+
+    .raw-table td.flag-red {
+      color: var(--red);
+      font-family: var(--font-mono);
+      font-size: 10px
+    }
+
+    .raw-table td.flag-org {
+      color: var(--orange);
+      font-family: var(--font-mono);
+      font-size: 10px
+    }
+
+    .raw-table td.flag-grn {
+      color: var(--green);
+      font-family: var(--font-mono);
+      font-size: 10px
+    }
+
+    /* ── MISSION RULES ── */
+    .rule-box {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      padding: 14px 16px
+    }
+
+    .rule-label {
+      font-family: var(--font-mono);
+      font-size: 8px;
+      color: var(--crimson);
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+      font-weight: 600
+    }
+
+    .rule-text {
+      font-size: 13px;
+      font-weight: 400;
+      color: var(--text-2);
+      line-height: 1.7
+    }
+
+    /* ── EQUIPMENT ── */
+    .item-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(295px, 1fr));
+      gap: 12px
+    }
+
+    .item-card {
+      background: var(--bg-panel);
+      border: 1px solid var(--border);
+      border-top: 3px solid var(--border);
+      cursor: pointer;
+      transition: all .2s;
+      position: relative;
+      overflow: hidden;
+      box-shadow: var(--shadow)
+    }
+
+    .item-card:hover,
+    .item-card:focus {
+      box-shadow: var(--shadow-md);
+      outline: none;
+      border-color: var(--crimson)
+    }
+
+    .item-card.selected {
+      border-top-color: var(--crimson);
+      border-color: var(--crimson)
+    }
+
+    .item-card.disabled {
+      opacity: .4;
+      cursor: not-allowed
+    }
+
+    .item-hdr {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      padding: 12px 14px 10px;
+      border-bottom: 1px solid var(--border);
+      background: var(--bg-card)
+    }
+
+    .item-num {
+      font-family: var(--font-mono);
+      font-size: 8px;
+      color: var(--text-3);
+      letter-spacing: 0.2em
+    }
+
+    .item-name {
+      font-family: var(--font-disp);
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text);
+      margin: 3px 0;
+      flex: 1;
+      padding-right: 8px;
+      line-height: 1.35
+    }
+
+    .item-mu {
+      font-family: var(--font-mono);
+      font-size: 17px;
+      color: var(--crimson);
+      font-weight: 600;
+      line-height: 1;
+      white-space: nowrap
+    }
+
+    .item-mu span {
+      font-size: 8px;
+      color: var(--text-3);
+      display: block;
+      text-align: right
+    }
+
+    .item-body {
+      padding: 10px 14px
+    }
+
+    .item-desc {
+      font-size: 12px;
+      color: var(--text-2);
+      line-height: 1.6;
+      margin-bottom: 8px
+    }
+
+    .item-tags {
+      display: flex;
+      gap: 5px;
+      flex-wrap: wrap
+    }
+
+    .tag {
+      font-family: var(--font-mono);
+      font-size: 7px;
+      padding: 2px 6px;
+      border: 1px solid;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      border-radius: 2px
+    }
+
+    .tag-power {
+      color: #7a5500;
+      border-color: #ddb060;
+      background: #fff8ee
+    }
+
+    .tag-risk {
+      color: var(--red);
+      border-color: #e8a0a0;
+      background: #fff5f5
+    }
+
+    .tag-bonus {
+      color: var(--green);
+      border-color: #80c8a8;
+      background: #f0fff8
+    }
+
+    .tag-dep {
+      color: var(--blue);
+      border-color: #90b8e0;
+      background: #f0f6ff
+    }
+
+    .sel-dot {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      border: 2px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 9px;
+      color: transparent;
+      transition: all .2s
+    }
+
+    .item-card.selected .sel-dot {
+      background: var(--crimson);
+      border-color: var(--crimson);
+      color: #fff
+    }
+
+    /* ── PROPOSAL ── */
+    .slot-row {
+      display: grid;
+      grid-template-columns: 36px 1fr 80px;
+      gap: 10px;
+      align-items: center;
+      padding: 12px 14px;
+      background: var(--bg-panel);
+      border: 1px solid var(--border);
+      margin-bottom: 7px;
+      transition: border-color .2s
+    }
+
+    .slot-row.filled {
+      border-color: rgba(139, 26, 26, .35)
+    }
+
+    .slot-row.locked {
+      border-left: 3px solid var(--red);
+      background: var(--red-pale)
+    }
+
+    .slot-num {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: var(--text-3);
+      text-align: center
+    }
+
+    .slot-name {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text)
+    }
+
+    .slot-empty {
+      font-size: 13px;
+      color: var(--text-3);
+      font-style: italic
+    }
+
+    .slot-cost {
+      font-family: var(--font-mono);
+      font-size: 13px;
+      color: var(--crimson);
+      text-align: right
+    }
+
+    .lock-badge {
+      font-family: var(--font-mono);
+      font-size: 7px;
+      color: var(--red);
+      border: 1px solid rgba(192, 57, 43, .4);
+      padding: 2px 5px;
+      display: inline-block;
+      margin-top: 3px;
+      letter-spacing: .1em
+    }
+
+    .budget-wrap {
+      background: var(--bg-panel);
+      border: 1px solid var(--border);
+      padding: 16px;
+      margin-bottom: 14px
+    }
+
+    .bud-nums {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 10px
+    }
+
+    .bud-used {
+      font-family: var(--font-mono);
+      font-size: 30px;
+      color: var(--crimson);
+      line-height: 1
+    }
+
+    .bud-total {
+      font-family: var(--font-mono);
+      font-size: 13px;
+      color: var(--text-2)
+    }
+
+    .bud-lbl {
+      font-family: var(--font-disp);
+      font-size: 8px;
+      font-weight: 700;
+      letter-spacing: 0.25em;
+      color: var(--text-3);
+      text-transform: uppercase;
+      margin-bottom: 6px
+    }
+
+    .bud-bar-wrap {
+      height: 5px;
+      background: var(--border);
+      position: relative;
+      overflow: hidden
+    }
+
+    .bud-bar {
+      position: absolute;
+      left: 0;
+      top: 0;
+      height: 100%;
+      background: var(--crimson);
+      transition: width .4s, background .4s
+    }
+
+    .bud-bar.over {
+      background: var(--red)
+    }
+
+    .warn-box {
+      background: rgba(192, 57, 43, .07);
+      border: 1px solid rgba(192, 57, 43, .3);
+      padding: 10px 14px;
+      margin-bottom: 12px;
+      display: flex;
+      gap: 9px;
+      align-items: flex-start
+    }
+
+    .warn-icon {
+      color: var(--orange);
+      flex-shrink: 0;
+      font-size: 13px
+    }
+
+    .warn-text {
+      font-size: 12px;
+      color: var(--red);
+      line-height: 1.5
+    }
+
+    .justify-lbl {
+      font-family: var(--font-mono);
+      font-size: 8px;
+      color: var(--text-2);
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      margin-bottom: 6px
+    }
+
+    .justify-field {
+      width: 100%;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      color: var(--text);
+      font-family: var(--font-body);
+      font-size: 13px;
+      padding: 10px 12px;
+      resize: vertical;
+      min-height: 75px;
+      line-height: 1.6;
+      transition: border-color .2s
+    }
+
+    .justify-field:focus {
+      outline: none;
+      border-color: var(--crimson)
+    }
+
+    .justify-field::placeholder {
+      color: var(--text-3)
+    }
+
+    .hab-opts {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-bottom: 14px
+    }
+
+    .hab-opt {
+      background: var(--bg-panel);
+      border: 1px solid var(--border);
+      padding: 12px;
+      cursor: pointer;
+      text-align: center;
+      transition: all .2s
+    }
+
+    .hab-opt:hover,
+    .hab-opt:focus {
+      border-color: #bbb;
+      outline: none
+    }
+
+    .hab-opt.selected {
+      border-color: var(--crimson);
+      background: var(--crimson-pale)
+    }
+
+    .hab-opt-title {
+      font-family: var(--font-disp);
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      color: var(--text-2);
+      text-transform: uppercase;
+      margin-bottom: 3px
+    }
+
+    .hab-opt.selected .hab-opt-title {
+      color: var(--crimson)
+    }
+
+    .round-wrap {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      margin-bottom: 16px
+    }
+
+    .rd-dot {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      border: 2px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-disp);
+      font-size: 9px;
+      font-weight: 700;
+      color: var(--text-3);
+      transition: all .3s
+    }
+
+    .rd-dot.active {
+      border-color: var(--crimson);
+      color: var(--crimson)
+    }
+
+    .rd-dot.done {
+      background: var(--crimson);
+      border-color: var(--crimson);
+      color: #fff
+    }
+
+    .rd-line {
+      flex: 1;
+      height: 1px;
+      background: var(--border)
+    }
+
+    /* ── BUTTONS ── */
+    .btn {
+      background: var(--crimson);
+      border: 1px solid var(--crimson);
+      color: #fff;
+      font-family: var(--font-disp);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      padding: 12px 28px;
+      cursor: pointer;
+      transition: all .2s;
+      box-shadow: 0 2px 8px rgba(139, 26, 26, .2)
+    }
+
+    .btn:hover {
+      background: var(--crimson-dark);
+      box-shadow: 0 4px 14px rgba(139, 26, 26, .3)
+    }
+
+    .btn:disabled {
+      background: var(--border);
+      border-color: var(--border);
+      color: var(--text-3);
+      cursor: not-allowed;
+      box-shadow: none
+    }
+
+    .btn-sm {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text-2);
+      font-family: var(--font-disp);
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      padding: 8px 16px;
+      cursor: pointer;
+      transition: all .2s
+    }
+
+    .btn-sm:hover {
+      border-color: var(--crimson);
+      color: var(--crimson)
+    }
+
+    .btn-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-top: 16px
+    }
+
+    /* ── FEEDBACK ── */
+    .fb-report {
+      background: var(--bg-panel);
+      border: 1px solid var(--border);
+      border-top: 3px solid var(--crimson);
+      padding: 22px;
+      margin-bottom: 14px;
+      animation: fadein .4s ease;
+      box-shadow: var(--shadow-md)
+    }
+
+    @keyframes fadein {
+      from {
+        opacity: 0;
+        transform: translateY(6px)
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0)
+      }
+    }
+
+    .fb-hdr {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 18px;
+      padding-bottom: 14px;
+      border-bottom: 1px solid var(--border)
+    }
+
+    .fb-title {
+      font-family: var(--font-disp);
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--crimson);
+      letter-spacing: 0.15em;
+      text-transform: uppercase
+    }
+
+    .fb-meta {
+      font-family: var(--font-mono);
+      font-size: 8px;
+      color: var(--text-3);
+      margin-top: 4px
+    }
+
+    .fb-status {
+      font-family: var(--font-mono);
+      font-size: 9px;
+      padding: 5px 12px;
+      border: 1px solid;
+      letter-spacing: 0.12em;
+      text-transform: uppercase
+    }
+
+    .fb-status.fail {
+      color: var(--red);
+      border-color: var(--red);
+      background: var(--red-pale)
+    }
+
+    .fb-status.warn {
+      color: var(--orange);
+      border-color: var(--orange);
+      background: rgba(192, 112, 0, .07)
+    }
+
+    .fb-status.pass {
+      color: var(--green);
+      border-color: var(--green);
+      background: var(--green-pale)
+    }
+
+    .idx-row {
+      display: grid;
+      grid-template-columns: 160px 60px 60px 1fr 110px;
+      gap: 10px;
+      align-items: center;
+      padding: 7px 0;
+      border-bottom: 1px solid var(--border)
+    }
+
+    .idx-row:last-child {
+      border-bottom: none
+    }
+
+    .idx-name {
+      font-family: var(--font-body);
+      font-size: 13px;
+      font-weight: 600
+    }
+
+    .idx-score {
+      font-family: var(--font-mono);
+      font-size: 14px;
+      text-align: center
+    }
+
+    .idx-score.ok {
+      color: var(--green)
+    }
+
+    .idx-score.warn {
+      color: var(--orange)
+    }
+
+    .idx-score.fail {
+      color: var(--red)
+    }
+
+    .idx-thresh {
+      font-family: var(--font-mono);
+      font-size: 9px;
+      color: var(--text-3);
+      text-align: center
+    }
+
+    .idx-bar-wrap {
+      height: 4px;
+      background: var(--border);
+      position: relative
+    }
+
+    .idx-bar {
+      position: absolute;
+      left: 0;
+      top: 0;
+      height: 100%;
+      transition: width .5s
+    }
+
+    .idx-lbl {
+      font-family: var(--font-mono);
+      font-size: 8px;
+      letter-spacing: 0.12em;
+      text-align: right
+    }
+
+    .fb-line {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 9px;
+      font-size: 13px;
+      color: var(--text-2);
+      line-height: 1.6
+    }
+
+    .fb-line::before {
+      content: '›';
+      font-family: var(--font-mono);
+      color: var(--crimson);
+      flex-shrink: 0
+    }
+
+    .fb-line.crit {
+      color: var(--red)
+    }
+
+    .fb-line.crit::before {
+      color: var(--red)
+    }
+
+    .fail-day {
+      background: var(--red-pale);
+      border: 1px solid rgba(192, 57, 43, .3);
+      padding: 12px 16px;
+      margin-top: 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center
+    }
+
+    .fail-day-lbl {
+      font-family: var(--font-mono);
+      font-size: 8px;
+      color: var(--red);
+      letter-spacing: 0.2em;
+      text-transform: uppercase
+    }
+
+    .fail-day-val {
+      font-family: var(--font-mono);
+      font-size: 22px;
+      color: var(--red)
+    }
+
+    .mv-box {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      padding: 18px;
+      text-align: center
+    }
+
+    .mv-lbl {
+      font-family: var(--font-disp);
+      font-size: 8px;
+      font-weight: 700;
+      letter-spacing: 0.25em;
+      color: var(--text-3);
+      text-transform: uppercase;
+      margin-bottom: 6px
+    }
+
+    .mv-val {
+      font-family: var(--font-mono);
+      font-size: 44px;
+      line-height: 1;
+      transition: color .4s
+    }
+
+    .mv-thresh {
+      font-family: var(--font-mono);
+      font-size: 9px;
+      color: var(--text-3);
+      margin-top: 4px
+    }
+
+    .pwr-box {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      padding: 10px 12px;
+      text-align: center
+    }
+
+    .pwr-lbl {
+      font-family: var(--font-disp);
+      font-size: 8px;
+      font-weight: 700;
+      letter-spacing: 0.15em;
+      color: var(--text-3);
+      text-transform: uppercase;
+      margin-bottom: 5px
+    }
+
+    .pwr-val {
+      font-family: var(--font-mono);
+      font-size: 20px;
+      line-height: 1
+    }
+
+    /* ── LANGUAGE ── */
+    .frame-cat {
+      margin-bottom: 18px
+    }
+
+    .frame-cat-title {
+      font-family: var(--font-mono);
+      font-size: 8px;
+      color: var(--crimson);
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+      padding-bottom: 5px;
+      border-bottom: 2px solid var(--crimson);
+      font-weight: 600
+    }
+
+    .frame-item {
+      background: var(--bg-panel);
+      border: 1px solid var(--border);
+      padding: 9px 13px;
+      margin-bottom: 5px;
+      font-family: var(--font-body);
+      font-size: 13px;
+      color: var(--text);
+      line-height: 1.5;
+      transition: border-color .2s
+    }
+
+    .frame-item:hover {
+      border-color: var(--crimson);
+      background: var(--crimson-pale)
+    }
+
+    /* ── PRESENTATION ── */
+    .pres-step {
+      background: var(--bg-panel);
+      border: 1px solid var(--border);
+      border-left: 4px solid var(--crimson);
+      padding: 14px 16px;
+      margin-bottom: 9px
+    }
+
+    .pres-step-num {
+      font-family: var(--font-mono);
+      font-size: 8px;
+      color: var(--crimson);
+      letter-spacing: 0.2em;
+      margin-bottom: 5px
+    }
+
+    .pres-step-title {
+      font-family: var(--font-disp);
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 4px;
+      letter-spacing: 0.06em
+    }
+
+    .pres-step-time {
+      font-family: var(--font-mono);
+      font-size: 8px;
+      color: var(--text-3);
+      margin-bottom: 6px
+    }
+
+    .pres-step-desc {
+      font-size: 12px;
+      color: var(--text-2);
+      line-height: 1.6
+    }
+
+    /* ── INPUTS ── */
+    .inp {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      color: var(--text);
+      font-family: var(--font-body);
+      font-size: 13px;
+      padding: 9px 12px;
+      width: 100%;
+      transition: border-color .2s
+    }
+
+    .inp:focus {
+      outline: none;
+      border-color: var(--crimson)
+    }
+
+    .inp::placeholder {
+      color: var(--text-3)
+    }
+
+    .inp-lbl {
+      font-family: var(--font-mono);
+      font-size: 8px;
+      color: var(--text-2);
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      margin-bottom: 5px
+    }
+
+    select.inp {
+      cursor: pointer
+    }
+
+    /* ── MISC ── */
+    .empty {
+      text-align: center;
+      padding: 60px 20px;
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: var(--text-3);
+      letter-spacing: 0.2em;
+      text-transform: uppercase
+    }
+
+    .divider {
+      height: 1px;
+      background: var(--border);
+      margin: 20px 0
+    }
+
+    .text-crimson {
+      color: var(--crimson)
+    }
+
+    .text-red {
+      color: var(--red)
+    }
+
+    .text-green {
+      color: var(--green)
+    }
+
+    .flex {
+      display: flex
+    }
+
+    .flex-col {
+      flex-direction: column
+    }
+
+    .align-center {
+      align-items: center
+    }
+
+    .jbetween {
+      justify-content: space-between
+    }
+
+    .gap8 {
+      gap: 8px
+    }
+
+    .gap12 {
+      gap: 12px
+    }
+
+    .gap16 {
+      gap: 16px
+    }
+
+    /* ── TEACHER MODAL ── */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, .45);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center
+    }
+
+    .modal-overlay.open {
+      display: flex
+    }
+
+    .modal {
+      background: #fff;
+      border-top: 4px solid var(--crimson);
+      width: 560px;
+      max-width: 95vw;
+      max-height: 90vh;
+      overflow-y: auto;
+      box-shadow: 0 8px 40px rgba(0, 0, 0, .2)
+    }
+
+    .modal-hdr {
+      background: var(--crimson);
+      padding: 16px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between
+    }
+
+    .modal-title {
+      font-family: var(--font-disp);
+      font-size: 13px;
+      font-weight: 800;
+      color: #fff;
+      letter-spacing: 0.12em;
+      text-transform: uppercase
+    }
+
+    .modal-close {
+      background: transparent;
+      border: none;
+      color: rgba(255, 255, 255, .7);
+      font-size: 20px;
+      cursor: pointer;
+      line-height: 1;
+      padding: 0 4px
+    }
+
+    .modal-close:hover {
+      color: #fff
+    }
+
+    .modal-body {
+      padding: 20px
+    }
+
+    .modal-section {
+      margin-bottom: 20px
+    }
+
+    .modal-section-title {
+      font-family: var(--font-mono);
+      font-size: 8px;
+      color: var(--text-3);
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      margin-bottom: 10px;
+      padding-bottom: 5px;
+      border-bottom: 1px solid var(--border)
+    }
+
+    .pin-wrap {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      margin-bottom: 16px
+    }
+
+    .pin-status {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      padding: 4px 10px;
+      border: 1px solid
+    }
+
+    .pin-status.ok {
+      color: var(--green);
+      border-color: var(--green);
+      background: var(--green-pale)
+    }
+
+    .pin-status.bad {
+      color: var(--red);
+      border-color: var(--red);
+      background: var(--red-pale)
+    }
+
+    .team-row {
+      display: grid;
+      grid-template-columns: 1fr 100px 80px;
+      gap: 8px;
+      align-items: center;
+      margin-bottom: 6px
+    }
+
+    .team-row-hdr {
+      display: grid;
+      grid-template-columns: 1fr 100px 80px;
+      gap: 8px;
+      margin-bottom: 4px
+    }
+
+    .team-row-hdr div {
+      font-family: var(--font-mono);
+      font-size: 7px;
+      color: var(--text-3);
+      letter-spacing: 0.15em;
+      text-transform: uppercase
+    }
+
+    .broadcast-info {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      padding: 10px 14px;
+      font-family: var(--font-mono);
+      font-size: 9px;
+      color: var(--text-2);
+      line-height: 1.6;
+      margin-top: 12px
+    }
+
+    /* ── TOAST ── */
+    .toast {
+      position: fixed;
+      bottom: 22px;
+      right: 22px;
+      background: #fff;
+      border: 2px solid var(--crimson);
+      border-left: 5px solid var(--crimson);
+      padding: 12px 18px;
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: var(--crimson);
+      z-index: 9999;
+      animation: fadein .3s;
+      box-shadow: 0 4px 16px rgba(139, 26, 26, .15)
+    }
+
+    .toast.err {
+      border-color: var(--red);
+      border-left-color: var(--red);
+      color: var(--red)
+    }
+
+    /* ── RESPONSIVE ── */
+    @media(max-width:900px) {
+
+      .g2,
+      .g3,
+      .g4 {
+        grid-template-columns: 1fr
+      }
+
+      .planet-params {
+        grid-template-columns: 1fr
+      }
+
+      .pp-col {
+        border-right: none;
+        border-bottom: 1px solid var(--border)
+      }
+
+      .idx-row {
+        grid-template-columns: 120px 50px 50px 1fr
+      }
+
+      .idx-lbl {
+        display: none
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- ══ LOCK SCREEN ══ -->
+  <div id="lock-screen" style="height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; background: radial-gradient(ellipse at top, #fff, #f0f0f0); text-align: center; position: absolute; inset: 0; z-index: 50; padding: 16px;">
+    <div style="font-family: var(--font-disp); font-size: 30px; font-weight: 900; color: var(--crimson); letter-spacing: 0.15em; margin-bottom: 10px;">ARES COMMAND</div>
+    <div style="font-family: var(--font-mono); font-size: 11px; color: var(--text-3); margin-bottom: 28px; letter-spacing: 0.2em; text-transform: uppercase;">Student Mission Terminal</div>
+    <div class="panel" style="width:min(540px, 100%); text-align:left;">
+      <div class="ph"><div class="ph-title">JOIN TEAM SIMULATION</div><div class="ph-badge">LIVE SESSION</div></div>
+      <div class="pb">
+        <div class="inp-lbl">TEAM JOIN CODE</div>
+        <input class="inp" id="join-code-input" type="text" placeholder="e.g. RED-7K3P2" autocomplete="off">
+        <div id="lock-screen-status" style="font-family:var(--font-mono);font-size:10px;color:var(--text-2);margin-top:10px;line-height:1.5">Enter your team code. Your budget and team assignment will load automatically.</div>
+        <div style="display:flex;gap:10px;margin-top:14px;flex-wrap:wrap">
+          <button class="btn" id="join-btn">ENTER SIMULATION</button>
+          <button class="btn-sm" id="leave-session-btn" style="display:none">LEAVE SESSION</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ APP CONTENT ══ -->
+  <div id="app-content" style="display: none;">
+
+    <!-- ══ HEADER ══ -->
+    <div class="hdr">
+      <div class="hdr-top">
+        <div>
+          <div class="mission-id">ARES COMMAND <span>// COLONISATION PLANNING UNIT — OPERATION: OLYMPUS FOOTHOLD</span>
+          </div>
+        </div>
+        <div class="hdr-right">
+          <div class="status-row">
+            <div class="dot"></div>
+            <span>SIMULATION ACTIVE</span>
+            <span>|</span><span class="sol" id="sol-counter">SOL 001</span>
+            <span>|</span><span id="team-display">TEAM: —</span>
+            <span>|</span><span id="round-display">ROUND: V1</span>
+          </div>
+        </div>
+      </div>
+      <div class="nav">
+        <button class="nav-tab active" id="tab-site" onclick="showSec('site')">01 — SITE BRIEF</button>
+        <button class="nav-tab" id="tab-equipment" onclick="showSec('equipment')">02 — EQUIPMENT</button>
+        <button class="nav-tab" id="tab-proposal" onclick="showSec('proposal')">03 — PROPOSAL</button>
+        <button class="nav-tab" id="tab-feedback" onclick="showSec('feedback')">04 — SIM FEEDBACK</button>
+        <button class="nav-tab" id="tab-language" onclick="showSec('language')">05 — LANGUAGE SUPPORT</button>
+        <button class="nav-tab" id="tab-presentation" onclick="showSec('presentation')">06 — PRESENTATION</button>
+      </div>
+    </div>
+
+    <div class="main">
+
+      <!-- ══════════════════════════ 01 SITE BRIEF ══════════════════════════ -->
+      <div id="sec-site" class="sec active">
+
+        <!-- Planet + Site cards -->
+        <div class="g2 mb20">
+
+          <!-- MARS PLANET CARD -->
+          <div class="planet-card" style="position:relative">
+            <div class="planet-img-wrap">
+              <img src="https://upload.wikimedia.org/wikipedia/commons/0/02/OSIRIS_Mars_true_color.jpg"
+                alt="Mars — OSIRIS Camera, ESA Rosetta 2007"
+                onerror="this.parentElement.style.background='radial-gradient(circle at 60% 40%, #c0391b, #6e1414, #1a0505)';this.style.display='none'">
+              <div class="planet-img-top">OSIRIS / ESA ROSETTA FLYBY — 24 FEB 2007</div>
+              <div class="planet-img-bottom">
+                <div class="planet-img-name">MARS</div>
+                <div class="planet-img-sub">FOURTH PLANET — THARSIS REGION FACING</div>
+              </div>
+            </div>
+            <div class="planet-params">
+              <div class="pp-col">
+                <div class="pp-label">PHYSICAL</div>
+                <div class="pp-row"><span class="pp-key">Diameter</span><span class="pp-val">6,779 km</span></div>
+                <div class="pp-row"><span class="pp-key">Mass</span><span class="pp-val">6.39 × 10²³ kg</span></div>
+                <div class="pp-row"><span class="pp-key">Gravity</span><span class="pp-val org">3.72 m/s² (0.38g)</span>
+                </div>
+                <div class="pp-row"><span class="pp-key">Axial tilt</span><span class="pp-val">25.19°</span></div>
+                <div class="pp-row"><span class="pp-key">Moons</span><span class="pp-val">2 (Phobos, Deimos)</span>
+                </div>
+                <div class="pp-row"><span class="pp-key">Magnetic field</span><span class="pp-val red">None (remnants
+                    only)</span></div>
+              </div>
+              <div class="pp-col">
+                <div class="pp-label">ENVIRONMENTAL</div>
+                <div class="pp-row"><span class="pp-key">Sol duration</span><span class="pp-val">24h 37m 22s</span>
+                </div>
+                <div class="pp-row"><span class="pp-key">Orbital period</span><span class="pp-val">686.97 Earth
+                    days</span></div>
+                <div class="pp-row"><span class="pp-key">Surface pressure</span><span class="pp-val red">636 Pa
+                    avg</span>
+                </div>
+                <div class="pp-row"><span class="pp-key">Temp range</span><span class="pp-val red">−143°C → +35°C</span>
+                </div>
+                <div class="pp-row"><span class="pp-key">Solar irradiance</span><span class="pp-val org">589 W/m²
+                    avg</span></div>
+                <div class="pp-row"><span class="pp-key">Atmosphere</span><span class="pp-val">95.3% CO₂</span></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- OLYMPUS MONS SITE CARD -->
+          <div class="planet-card" style="position:relative">
+            <div class="planet-img-wrap">
+              <img
+                src="https://upload.wikimedia.org/wikipedia/commons/c/c2/Olympus_Mons_-_ESA_Mars_Express_-_Flickr_-_Andrea_Luck.png"
+                alt="Olympus Mons — ESA Mars Express, Andrea Luck"
+                onerror="this.parentElement.style.background='radial-gradient(ellipse at 40% 50%, #5a3a20, #2a1a0a, #080402)';this.style.display='none'">
+              <div class="planet-img-top">VIKING ORBITER 1 — NASA JPL — 1978 — MOSAIC</div>
+              <div class="planet-img-bottom">
+                <div class="planet-img-name">OLYMPUS MONS</div>
+                <div class="planet-img-sub">SITE ALPHA — LOWER WESTERN FLANK — 18.4°N 226.5°E</div>
+              </div>
+            </div>
+            <div class="planet-params">
+              <div class="pp-col">
+                <div class="pp-label">VOLCANO</div>
+                <div class="pp-row"><span class="pp-key">Summit height</span><span class="pp-val">21,287 m
+                    (datum)</span>
+                </div>
+                <div class="pp-row"><span class="pp-key">Base diameter</span><span class="pp-val">624 km</span></div>
+                <div class="pp-row"><span class="pp-key">Caldera size</span><span class="pp-val">80 × 60 km</span></div>
+                <div class="pp-row"><span class="pp-key">Last eruption</span><span class="pp-val org">~25 Ma
+                    (est.)</span>
+                </div>
+                <div class="pp-row"><span class="pp-key">Escarpment</span><span class="pp-val red">up to 8,000 m</span>
+                </div>
+                <div class="pp-row"><span class="pp-key">Lava tube evidence</span><span class="pp-val org">SHARAD
+                    anomalies</span></div>
+              </div>
+              <div class="pp-col">
+                <div class="pp-label">SITE ALPHA CONDITIONS</div>
+                <div class="pp-row"><span class="pp-key">Altitude</span><span class="pp-val">~15,000 m</span></div>
+                <div class="pp-row"><span class="pp-key">Atmos. pressure</span><span class="pp-val red">~158 Pa (0.16
+                    kPa)</span></div>
+                <div class="pp-row"><span class="pp-key">Slope gradient</span><span class="pp-val">2–5°</span></div>
+                <div class="pp-row"><span class="pp-key">Terrain</span><span class="pp-val">Basaltic aa lava</span>
+                </div>
+                <div class="pp-row"><span class="pp-key">Regolith depth</span><span class="pp-val">~2–5 m</span></div>
+                <div class="pp-row"><span class="pp-key">Coordinates</span><span class="pp-val grn">18.4°N /
+                    226.5°E</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Mission brief — neutral -->
+        <div
+          style="background:var(--bg-card);border:1px solid var(--border);border-left:4px solid var(--crimson);padding:14px 18px;margin-bottom:20px">
+          <div
+            style="font-family:var(--font-disp);font-size:11px;font-weight:800;letter-spacing:0.1em;text-transform:uppercase;color:var(--crimson);margin-bottom:6px">
+            MISSION DIRECTIVE — OPERATION: OLYMPUS FOOTHOLD</div>
+          <div style="font-size:14px;color:var(--text-2);line-height:1.75">Your team is responsible for designing the
+            first permanent human presence at <strong style="color:var(--text)">Site Alpha, Olympus Mons</strong>. Study
+            the environmental data below. Select exactly <strong style="color:var(--text)">4 items</strong> from the
+            equipment catalogue within your assigned cargo budget. Submit your proposal. Justify every decision with
+            data.
+          </div>
+        </div>
+
+        <!-- Environmental Data Header -->
+        <div class="data-hdr mb20">
+          <div class="data-hdr-title">ENVIRONMENTAL DATA — SITE ALPHA, OLYMPUS MONS</div>
+          <div class="data-hdr-source">Sources: NASA RAD/MSL · REMS/Curiosity · MCS/MRO · TES/MGS · HRSC/ESA · MOLA/MGS
+            ·
+            SHARAD/MRO — Projected 180-sol window. Values adjusted for 18.4°N, 226.5°E, ~15,000 m elevation.</div>
+        </div>
+
+        <!-- Charts row 1 -->
+        <div class="g2 mb20">
+
+          <div class="panel">
+            <div class="ph">
+              <div class="ph-title">IONISING RADIATION DOSE RATE</div>
+              <div class="ph-badge">mSv/day — RAD INSTRUMENT SCALED</div>
+            </div>
+            <div class="pb">
+              <div class="chart-stat-row">
+                <div class="chart-stat">
+                  <div class="chart-stat-val">1.05</div>
+                  <div class="chart-stat-lbl">avg baseline (mSv/d)</div>
+                </div>
+                <div class="chart-stat">
+                  <div class="chart-stat-val" style="color:var(--red)">14.2</div>
+                  <div class="chart-stat-lbl">SPE peak recorded</div>
+                </div>
+                <div class="chart-stat">
+                  <div class="chart-stat-val">3</div>
+                  <div class="chart-stat-lbl">solar events / 180 sol</div>
+                </div>
+                <div class="chart-stat">
+                  <div class="chart-stat-val org">189</div>
+                  <div class="chart-stat-lbl">cumul. mSv (baseline)</div>
+                </div>
+              </div>
+              <div style="position:relative;height:200px"><canvas id="ch-rad"></canvas></div>
+              <div class="chart-fn">RAD (Radiation Assessment Detector) baseline from MSL/Curiosity surface data (0.67
+                mSv/day at datum). Scaled +57% for reduced atmospheric column at 15,000 m altitude. Solar Particle
+                Events
+                (SPEs) modelled from historical occurrence rate; dose spikes are GCR + SEP combined. NASA career limit:
+                1,000 mSv. Annual baseline at this site: ~383 mSv.</div>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="ph">
+              <div class="ph-title">SURFACE TEMPERATURE RANGE</div>
+              <div class="ph-badge">°C — MIN / MAX — REMS SCALED</div>
+            </div>
+            <div class="pb">
+              <div class="chart-stat-row">
+                <div class="chart-stat">
+                  <div class="chart-stat-val" style="color:var(--red)">−26</div>
+                  <div class="chart-stat-lbl">max recorded (°C)</div>
+                </div>
+                <div class="chart-stat">
+                  <div class="chart-stat-val" style="color:var(--blue)">−103</div>
+                  <div class="chart-stat-lbl">min recorded (°C)</div>
+                </div>
+                <div class="chart-stat">
+                  <div class="chart-stat-val org">77°C</div>
+                  <div class="chart-stat-lbl">daily swing avg</div>
+                </div>
+                <div class="chart-stat">
+                  <div class="chart-stat-val">−62</div>
+                  <div class="chart-stat-lbl">mean (°C)</div>
+                </div>
+              </div>
+              <div style="position:relative;height:200px"><canvas id="ch-temp"></canvas></div>
+              <div class="chart-fn">REMS (Rover Environmental Monitoring Station) data from Gale Crater (4.6°S),
+                adjusted
+                for latitude 18.4°N and altitude correction of approximately −15°C from datum-level readings. Thermal
+                cycling induces material fatigue in seals, joints and structural connections at rate proportional to ΔT
+                per sol.</div>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="ph">
+              <div class="ph-title">ATMOSPHERIC DUST OPTICAL DEPTH (τ)</div>
+              <div class="ph-badge">TAU — MCS/TES CLIMATOLOGY</div>
+            </div>
+            <div class="pb">
+              <div class="chart-stat-row">
+                <div class="chart-stat">
+                  <div class="chart-stat-val">0.35</div>
+                  <div class="chart-stat-lbl">clear season τ</div>
+                </div>
+                <div class="chart-stat">
+                  <div class="chart-stat-val org">2.8</div>
+                  <div class="chart-stat-lbl">regional storm peak</div>
+                </div>
+                <div class="chart-stat">
+                  <div class="chart-stat-val" style="color:var(--red)">5.0+</div>
+                  <div class="chart-stat-lbl">global storm τ</div>
+                </div>
+                <div class="chart-stat">
+                  <div class="chart-stat-val">Ls 180°</div>
+                  <div class="chart-stat-lbl">dust season onset</div>
+                </div>
+              </div>
+              <div style="position:relative;height:200px"><canvas id="ch-dust"></canvas></div>
+              <div class="chart-fn">MCS (Mars Climate Sounder) & TES (Thermal Emission Spectrometer) climatological
+                record
+                for Tharsis region. τ = 1.0 reduces solar transmission by ~63%. τ = 2.8 (regional storm) reduces to ~6%.
+                Dust also accumulates on exposed horizontal surfaces at ~0.1–1.0 mm/year depending on wind regime.
+                Global
+                dust storm probability in any given Mars year: ~25%.</div>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="ph">
+              <div class="ph-title">SOLAR IRRADIANCE & ATMOSPHERIC COMPOSITION</div>
+              <div class="ph-badge">W/m² + MOLE FRACTION</div>
+            </div>
+            <div class="pb">
+              <div class="g2" style="gap:12px">
+                <div>
+                  <div
+                    style="font-family:var(--font-mono);font-size:8px;color:var(--text-3);letter-spacing:0.15em;text-transform:uppercase;margin-bottom:6px">
+                    IRRADIANCE COMPARISON (W/m²)</div>
+                  <div style="position:relative;height:180px"><canvas id="ch-solar"></canvas></div>
+                </div>
+                <div>
+                  <div
+                    style="font-family:var(--font-mono);font-size:8px;color:var(--text-3);letter-spacing:0.15em;text-transform:uppercase;margin-bottom:6px">
+                    ATMOSPHERIC COMPOSITION</div>
+                  <div style="position:relative;height:180px"><canvas id="ch-atmos"></canvas></div>
+                </div>
+              </div>
+              <div class="chart-fn">Left: Solar irradiance at Earth (1,361 W/m²) vs Mars average (589 W/m²) vs site
+                clear-sky (~575 W/m² — thin atmosphere reduces dust attenuation) vs site during τ=2.8 storm (~35 W/m²).
+                Right: Martian atmospheric composition by volume (MAVEN/Viking Gas Chromatograph data). O₂ partial
+                pressure at this site: ~0.021 kPa. Immediately fatal to unprotected crew.</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Data tables row -->
+        <div class="g3 mb20">
+
+          <div class="panel">
+            <div class="ph">
+              <div class="ph-title">WIND REGIME</div>
+              <div class="ph-badge">REMS / MCD MODEL</div>
+            </div>
+            <div class="pb" style="padding:12px">
+              <table class="raw-table">
+                <thead>
+                  <tr>
+                    <th>Parameter</th>
+                    <th>Value</th>
+                    <th>Note</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>Mean wind speed</td>
+                    <td class="val">3.4 m/s</td>
+                    <td class="flag-grn">LOW</td>
+                  </tr>
+                  <tr>
+                    <td>Maximum (storm)</td>
+                    <td class="val">32 m/s</td>
+                    <td class="flag-org">MODERATE</td>
+                  </tr>
+                  <tr>
+                    <td>Katabatic (night slope)</td>
+                    <td class="val">8–15 m/s</td>
+                    <td class="flag-org">NOTE</td>
+                  </tr>
+                  <tr>
+                    <td>Dynamic pressure @ 32 m/s</td>
+                    <td class="val">~2.4 Pa</td>
+                    <td class="flag-grn">LOW FORCE</td>
+                  </tr>
+                  <tr>
+                    <td>Dominant direction</td>
+                    <td class="val">W–SW</td>
+                    <td>Planetary circ.</td>
+                  </tr>
+                  <tr>
+                    <td>Dust devil frequency</td>
+                    <td class="val">Low</td>
+                    <td>High altitude site</td>
+                  </tr>
+                  <tr>
+                    <td>Abrasion risk (basalt grit)</td>
+                    <td class="val">Moderate</td>
+                    <td class="flag-org">SEALS/OPTICS</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="ph">
+              <div class="ph-title">PRESSURE PROFILE AT ALTITUDE</div>
+              <div class="ph-badge">MOLA / MCS</div>
+            </div>
+            <div class="pb" style="padding:12px">
+              <table class="raw-table">
+                <thead>
+                  <tr>
+                    <th>Altitude (m)</th>
+                    <th>Pressure (Pa)</th>
+                    <th>% Earth SL</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>Earth sea level (ref)</td>
+                    <td class="val">101,325 Pa</td>
+                    <td>100%</td>
+                  </tr>
+                  <tr>
+                    <td>Mars datum (0 m)</td>
+                    <td class="val">636 Pa</td>
+                    <td class="flag-org">0.63%</td>
+                  </tr>
+                  <tr>
+                    <td>5,000 m</td>
+                    <td class="val">400 Pa</td>
+                    <td class="flag-org">0.39%</td>
+                  </tr>
+                  <tr>
+                    <td>10,000 m</td>
+                    <td class="val">252 Pa</td>
+                    <td class="flag-red">0.25%</td>
+                  </tr>
+                  <tr>
+                    <td style="font-weight:700;color:var(--crimson)">15,000 m ← SITE</td>
+                    <td class="val" style="color:var(--red)">158 Pa</td>
+                    <td class="flag-red">0.16%</td>
+                  </tr>
+                  <tr>
+                    <td>20,000 m</td>
+                    <td class="val">100 Pa</td>
+                    <td class="flag-red">0.10%</td>
+                  </tr>
+                  <tr>
+                    <td>Habitat required pressure</td>
+                    <td class="val">~70,000 Pa</td>
+                    <td>~69% Earth</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="ph">
+              <div class="ph-title">GEOLOGICAL SURVEY</div>
+              <div class="ph-badge">HRSC / SHARAD / CRISM</div>
+            </div>
+            <div class="pb" style="padding:12px">
+              <table class="raw-table">
+                <thead>
+                  <tr>
+                    <th>Parameter</th>
+                    <th>Finding</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>Surface rock type</td>
+                    <td class="val">Basalt (Mg-rich)</td>
+                  </tr>
+                  <tr>
+                    <td>Mineral composition</td>
+                    <td class="val">Olivine, pyroxene</td>
+                  </tr>
+                  <tr>
+                    <td>Regolith depth</td>
+                    <td class="val">2–5 m est.</td>
+                  </tr>
+                  <tr>
+                    <td>Surface age (site)</td>
+                    <td class="val">~25–100 Ma</td>
+                  </tr>
+                  <tr>
+                    <td>SHARAD radar anomalies</td>
+                    <td class="val org">YES — subsurface</td>
+                  </tr>
+                  <tr>
+                    <td>Void size (Earth analogy)</td>
+                    <td class="val org">50–300 m diam.</td>
+                  </tr>
+                  <tr>
+                    <td>Void structural stability</td>
+                    <td class="val">Unknown — unsampled</td>
+                  </tr>
+                  <tr>
+                    <td>Water ice (subsurface)</td>
+                    <td class="val">Unconfirmed at site</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- Mission Rules -->
+        <div class="panel">
+          <div class="ph">
+            <div class="ph-title">MISSION PARAMETERS</div>
+            <div class="ph-badge">SIMULATION RULES</div>
+          </div>
+          <div class="pb">
+            <div class="g3" style="gap:16px">
+              <div class="rule-box">
+                <div class="rule-label">CARGO SYSTEM</div>
+                <div class="rule-text">Each item carries a defined <strong>Mass Unit (MU)</strong> cost. Your team
+                  budget
+                  is assigned by mission command. Select exactly <strong>4 items</strong>. Total MU must not exceed your
+                  budget.</div>
+              </div>
+              <div class="rule-box">
+                <div class="rule-label">REVISION PROTOCOL</div>
+                <div class="rule-text">Maximum <strong>3 submission rounds</strong> (v1, v2, v3). After v1, you lock 2
+                  items permanently. Swapping any unlocked item in revision costs <strong>+0.5 MU</strong>
+                  reconfiguration
+                  penalty.</div>
+              </div>
+              <div class="rule-box">
+                <div class="rule-label">FEEDBACK SYSTEM</div>
+                <div class="rule-text">All simulation feedback is <strong>diagnostic</strong>. You will be told what is
+                  projected to fail and when. Strategic interpretation and corrective decisions are entirely your
+                  responsibility.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /site -->
+
+      <!-- ══════════════════════════ 02 EQUIPMENT ══════════════════════════ -->
+      <div id="sec-equipment" class="sec">
+        <div class="flex jbetween align-center mb20">
+          <div>
+            <div
+              style="font-family:var(--font-disp);font-size:13px;font-weight:800;letter-spacing:0.1em;text-transform:uppercase">
+              MASTER EQUIPMENT CATALOGUE</div>
+            <div style="font-family:var(--font-mono);font-size:9px;color:var(--text-3);margin-top:4px">20 ITEMS — SELECT
+              EXACTLY 4 — BUDGET ENFORCED ON PROPOSAL TAB</div>
+          </div>
+          <div class="flex gap12 align-center">
+            <div style="font-family:var(--font-mono);font-size:11px;color:var(--text-2)">SELECTED: <span id="sel-count"
+                style="color:var(--crimson)">0</span>/4</div>
+            <div style="font-family:var(--font-mono);font-size:11px;color:var(--text-2)">MU USED: <span id="mu-used-eq"
+                style="color:var(--crimson)">0</span></div>
+            <button class="btn-sm" id="eq-clear-btn" onclick="clearSel()">CLEAR ALL</button>
+            <button class="btn-sm" id="eq-proposal-btn" onclick="showSec('proposal')">VIEW PROPOSAL →</button>
+          </div>
+        </div>
+        <div class="panel mb20">
+          <div class="ph">
+            <div class="ph-title">LIVE POWER DASHBOARD</div>
+            <div class="ph-badge">NET SYSTEM MARGIN</div>
+          </div>
+          <div class="pb">
+            <div id="equip-pwr-bar" style="margin-bottom:12px">
+              <div
+                style="display:flex;justify-content:space-between;margin-bottom:6px;font-family:var(--font-mono);font-size:10px">
+                <span style="color:var(--green)">GENERATION: <span id="eq-gen">0</span> kW</span>
+                <span style="color:var(--text);font-weight:700">NET MARGIN: <span id="eq-net">0</span> kW</span>
+                <span style="color:var(--red)">DRAW: <span id="eq-draw">0</span> kW</span>
+              </div>
+              <div style="height:12px;background:var(--bg);border:1px solid var(--border);position:relative">
+                <div id="eq-bar-gen"
+                  style="position:absolute;left:0;top:0;bottom:0;background:var(--green);width:0%;transition:width 0.4s">
+                </div>
+                <div id="eq-bar-draw"
+                  style="position:absolute;right:0;top:0;bottom:0;background:var(--red);width:0%;transition:width 0.4s">
+                </div>
+              </div>
+            </div>
+            <div id="eq-alerts" style="display:flex;flex-direction:column;gap:8px;display:none"></div>
+          </div>
+        </div>
+        <div class="item-grid" id="item-grid"></div>
+      </div>
+
+      <!-- ══════════════════════════ 03 PROPOSAL ══════════════════════════ -->
+      <div id="sec-proposal" class="sec">
+        <div class="g2 gap16">
+          <div>
+            <div class="panel mb12">
+              <div class="ph">
+                <div class="ph-title">SUBMISSION ROUND</div>
+                <div class="ph-badge" id="round-badge">V1 — INITIAL</div>
+              </div>
+              <div class="pb">
+                <div class="round-wrap" id="round-wrap"></div>
+                <div class="warn-box" id="lock-warn" style="display:none">
+                  <span class="warn-icon">⚠</span>
+                  <span class="warn-text">Items marked LOCKED cannot be changed. Swapping any non-locked item adds +0.5
+                    MU
+                    reconfiguration cost.</span>
+                </div>
+              </div>
+            </div>
+            <div class="panel mb12">
+              <div class="ph">
+                <div class="ph-title">TEAM CONFIGURATION</div>
+              </div>
+              <div class="pb">
+                <div class="g2 gap12">
+                  <div>
+                    <div class="inp-lbl">TEAM ID</div><input class="inp" id="team-id" type="text"
+                      placeholder="Assigned by join code" readonly>
+                  </div>
+                  <div>
+                    <div class="inp-lbl">CARGO BUDGET (MU)</div><select class="inp" id="budget-sel" disabled>
+                      <option value="13">13 MU — Extended</option>
+                      <option value="12" selected>12 MU — Standard</option>
+                      <option value="11">11 MU — Restricted</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="warn-box" style="margin-top:10px;margin-bottom:0;background:rgba(26,122,74,0.07);border-color:rgba(26,122,74,0.3);display:none" id="teacher-budget-note">
+                  <span class="warn-icon" style="color:var(--green)">✓</span>
+                  <span class="warn-text" style="color:var(--green)" id="teacher-budget-text"></span>
+                </div>
+              </div>
+            </div>
+            <div class="panel mb12">
+              <div class="ph">
+                <div class="ph-title">CARGO BUDGET METER</div>
+              </div>
+              <div class="pb">
+                <div class="budget-wrap" style="margin-bottom:0">
+                  <div class="bud-lbl">MASS UNITS ALLOCATED</div>
+                  <div class="bud-nums">
+                    <div class="bud-used"><span id="mu-used">0</span></div>
+                    <div class="bud-total">/ <span id="mu-total">12</span> MU</div>
+                  </div>
+                  <div class="bud-bar-wrap">
+                    <div class="bud-bar" id="bud-bar" style="width:0%"></div>
+                  </div>
+                </div>
+                <div class="warn-box" id="bud-warn" style="display:none;margin-bottom:0;margin-top:10px">
+                  <span class="warn-icon">⚠</span><span class="warn-text" id="bud-warn-text">Budget exceeded.</span>
+                </div>
+              </div>
+            </div>
+            <div class="panel mb12" id="comparison-panel" style="display:none">
+              <div class="ph">
+                <div class="ph-title" id="compare-title">COMPARE V1 vs V2</div>
+              </div>
+              <div class="pb" id="comparison-content"></div>
+            </div>
+            <div class="panel">
+              <div class="ph">
+                <div class="ph-title">HABITATION STRATEGY</div>
+                <div class="ph-badge">REQUIRED</div>
+              </div>
+              <div class="pb">
+                <div class="hab-opts" id="hab-opts">
+                  <div tabindex="0" class="hab-opt"
+                    onkeypress="if(event.key==='Enter'||event.key===' ') selHab('surface',this)"
+                    onclick="selHab('surface',this)">
+                    <div class="hab-opt-title">SURFACE</div>
+                    <div style="font-size:10px;color:var(--text-3);margin-top:3px">Open exposure</div>
+                  </div>
+                  <div tabindex="0" class="hab-opt"
+                    onkeypress="if(event.key==='Enter'||event.key===' ') selHab('partial',this)"
+                    onclick="selHab('partial',this)">
+                    <div class="hab-opt-title">PARTIAL SUBSURFACE</div>
+                    <div style="font-size:10px;color:var(--text-3);margin-top:3px">Bermed / shielded</div>
+                  </div>
+                  <div tabindex="0" class="hab-opt"
+                    onkeypress="if(event.key==='Enter'||event.key===' ') selHab('subsurface',this)"
+                    onclick="selHab('subsurface',this)">
+                    <div class="hab-opt-title">FULLY SUBSURFACE</div>
+                    <div style="font-size:10px;color:var(--text-3);margin-top:3px">Lava tube / buried</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div>
+            <div class="panel">
+              <div class="ph">
+                <div class="ph-title">SELECTED ITEMS</div>
+                <div class="ph-badge">4 SLOTS REQUIRED</div>
+              </div>
+              <div class="pb">
+                <div id="slot-list"></div>
+                <div style="margin-top:14px">
+                  <div class="inp-lbl">CRITICAL RISK IDENTIFIED</div>
+                  <textarea class="justify-field inp" id="crit-risk" rows="3"
+                    placeholder="What is the most critical vulnerability in your current selection?"></textarea>
+                </div>
+                <div style="margin-top:12px">
+                  <div class="inp-lbl">STRATEGIC JUSTIFICATION</div>
+                  <textarea class="justify-field inp" id="strategy" rows="5"
+                    placeholder="Explain the overall survival logic of your selection. Why does this combination work? What does each item protect against?"></textarea>
+                </div>
+                <div class="btn-row">
+                  <button class="btn" id="submit-btn" onclick="submitProposal()" disabled>SUBMIT PROPOSAL →</button>
+                  <span style="font-family:var(--font-mono);font-size:8px;color:var(--text-3)" id="submit-note">Complete
+                    all 4 slots to submit</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══════════════════════════ 04 FEEDBACK ══════════════════════════ -->
+      <div id="sec-feedback" class="sec">
+        <div id="fb-empty" class="empty">NO SIMULATION DATA — SUBMIT PROPOSAL TO GENERATE FEEDBACK</div>
+        <div id="fb-container" style="display:none"></div>
+      </div>
+
+      <!-- ══════════════════════════ 05 LANGUAGE ══════════════════════════ -->
+      <div id="sec-language" class="sec">
+        <div class="g2 gap16">
+          <div>
+            <div class="panel">
+              <div class="ph">
+                <div class="ph-title">NEGOTIATION & JUSTIFICATION FRAMES</div>
+                <div class="ph-badge">SPEAKING SUPPORT</div>
+              </div>
+              <div class="pb" id="lang-frames"></div>
+            </div>
+          </div>
+          <div>
+            <div class="panel">
+              <div class="ph">
+                <div class="ph-title">TECHNICAL VOCABULARY</div>
+                <div class="ph-badge">KEY TERMS</div>
+              </div>
+              <div class="pb">
+                <table class="raw-table" id="vocab-table"></table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══════════════════════════ 06 PRESENTATION ══════════════════════ -->
+      <div id="sec-presentation" class="sec">
+        <div class="g2 gap16">
+          <div>
+            <div class="panel mb12">
+              <div class="ph">
+                <div class="ph-title">INDIVIDUAL PRESENTATION GUIDE</div>
+                <div class="ph-badge">2 MINUTES</div>
+              </div>
+              <div class="pb">
+                <div style="font-size:13px;color:var(--text-2);line-height:1.7;margin-bottom:16px">Select <strong
+                    style="color:var(--text)">one item</strong> from your team's final configuration. Present it. Your
+                  argument must connect the item to your team's overall survival strategy — not merely describe its
+                  function.</div>
+                <div id="pres-steps"></div>
+              </div>
+            </div>
+          </div>
+          <div>
+            <div class="panel mb12">
+              <div class="ph">
+                <div class="ph-title">ASSESSMENT RUBRIC</div>
+                <div class="ph-badge">5 CRITERIA</div>
+              </div>
+              <div class="pb">
+                <table class="raw-table" id="rubric-table"></table>
+              </div>
+            </div>
+            <div class="panel">
+              <div class="ph">
+                <div class="ph-title">PREPARATION NOTES</div>
+              </div>
+              <div class="pb">
+                <div class="inp-lbl" style="margin-bottom:6px">SELECTED ITEM</div>
+                <input class="inp mb12" id="pres-item" placeholder="Which item are you presenting?">
+                <div class="inp-lbl" style="margin-bottom:6px">YOUR NOTES</div>
+                <textarea class="justify-field inp" id="pres-notes" rows="8"
+                  placeholder="Prepare your 2-minute presentation here."></textarea>
+                <div
+                  style="font-family:var(--font-mono);font-size:8px;color:var(--text-3);margin-top:6px;text-align:right"
+                  id="word-count">0 words</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /main -->
+  </div><!-- /app-content -->
+
+  <!-- ══ TOAST ══ -->
+  <script src="./shared-sim.js"></script>
+  <script src="./firebase.config.js"></script>
+  <script type="module" src="./student-app.js"></script>
+</body>
+
+</html>

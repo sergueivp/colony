@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="ARES COMMAND Teacher Dashboard - Live classroom control and submissions overview">
+  <title>ARES COMMAND - Teacher Dashboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=Nunito+Sans:wght@300;400;600;700;800&family=Montserrat:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #f0f0f0;
+      --bg-panel: #ffffff;
+      --bg-card: #f8f8f8;
+      --border: #dde0e6;
+      --crimson: #8b1a1a;
+      --crimson-dark: #6e1414;
+      --red: #c0392b;
+      --red-pale: rgba(192,57,43,0.08);
+      --green: #1a7a4a;
+      --green-pale: rgba(26,122,74,0.08);
+      --orange: #c07000;
+      --text: #1a1a2e;
+      --text-2: #5a5a72;
+      --text-3: #9999aa;
+      --font-mono: 'IBM Plex Mono', monospace;
+      --font-disp: 'Montserrat', sans-serif;
+      --font-body: 'Nunito Sans', sans-serif;
+      --shadow: 0 2px 12px rgba(0,0,0,0.10);
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background: var(--bg); color: var(--text); font-family: var(--font-body); min-height: 100vh; }
+    .hdr { background: var(--crimson); border-bottom: 3px solid var(--crimson-dark); padding: 12px 20px; }
+    .hdr-title { color: #fff; font-family: var(--font-disp); font-size: 14px; font-weight: 800; letter-spacing: 0.14em; text-transform: uppercase; }
+    .hdr-sub { color: rgba(255,255,255,0.75); font-family: var(--font-mono); font-size: 10px; margin-top: 4px; }
+    .main { max-width: 1400px; margin: 0 auto; padding: 20px; }
+    .g2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .panel { background: var(--bg-panel); border: 1px solid var(--border); box-shadow: var(--shadow); overflow: hidden; position: relative; }
+    .panel::before { content: ''; position: absolute; left: 0; right: 0; top: 0; height: 3px; background: var(--crimson); }
+    .ph { display: flex; align-items: center; justify-content: space-between; padding: 10px 16px; border-bottom: 1px solid var(--border); background: var(--bg-card); }
+    .ph-title { font-family: var(--font-disp); font-size: 11px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; }
+    .ph-badge { font-family: var(--font-mono); font-size: 8px; color: var(--text-3); border: 1px solid var(--border); padding: 2px 7px; }
+    .pb { padding: 16px; }
+    .inp { width: 100%; background: var(--bg); border: 1px solid var(--border); padding: 9px 12px; color: var(--text); font-size: 13px; font-family: var(--font-body); }
+    .inp:focus { outline: none; border-color: var(--crimson); }
+    .inp-lbl { font-family: var(--font-mono); font-size: 8px; color: var(--text-2); letter-spacing: 0.2em; text-transform: uppercase; margin-bottom: 5px; }
+    .btn { background: var(--crimson); border: 1px solid var(--crimson); color: #fff; font-family: var(--font-disp); font-size: 11px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; padding: 10px 18px; cursor: pointer; }
+    .btn:hover { background: var(--crimson-dark); }
+    .btn:disabled { background: var(--border); border-color: var(--border); color: var(--text-3); cursor: not-allowed; }
+    .btn-sm { background: transparent; border: 1px solid var(--border); color: var(--text-2); font-family: var(--font-disp); font-size: 9px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; padding: 8px 12px; cursor: pointer; }
+    .btn-sm:hover { border-color: var(--crimson); color: var(--crimson); }
+    .row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+    .team-row { display: grid; grid-template-columns: minmax(140px,1fr) 110px minmax(160px,1fr) auto auto; gap: 8px; align-items: center; margin-bottom: 8px; }
+    .team-row-hdr { display: grid; grid-template-columns: minmax(140px,1fr) 110px minmax(160px,1fr) auto auto; gap: 8px; margin-bottom: 6px; }
+    .team-row-hdr div { font-family: var(--font-mono); font-size: 8px; color: var(--text-3); letter-spacing: 0.15em; text-transform: uppercase; }
+    .raw-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+    .raw-table th { text-align: left; font-family: var(--font-disp); font-size: 8px; color: var(--text-3); letter-spacing: 0.14em; text-transform: uppercase; padding: 8px; border-bottom: 2px solid var(--border); background: var(--bg-card); }
+    .raw-table td { padding: 7px 8px; border-bottom: 1px solid var(--border); color: var(--text-2); }
+    .raw-table .val { font-family: var(--font-mono); color: var(--text); }
+    .status-chip { font-family: var(--font-mono); font-size: 9px; padding: 4px 8px; border: 1px solid; text-transform: uppercase; }
+    .status-chip.run { color: var(--green); border-color: var(--green); background: var(--green-pale); }
+    .status-chip.lock { color: var(--orange); border-color: var(--orange); background: rgba(192,112,0,0.08); }
+    .status-chip.fin { color: var(--red); border-color: var(--red); background: var(--red-pale); }
+    .pin-status { font-family: var(--font-mono); font-size: 10px; padding: 4px 10px; border: 1px solid; }
+    .pin-status.ok { color: var(--green); border-color: var(--green); background: var(--green-pale); }
+    .pin-status.bad { color: var(--red); border-color: var(--red); background: var(--red-pale); }
+    .note { font-family: var(--font-mono); font-size: 10px; color: var(--text-2); line-height: 1.5; }
+    .toast { position: fixed; bottom: 18px; right: 18px; background: #fff; border: 2px solid var(--crimson); border-left: 5px solid var(--crimson); padding: 12px 16px; font-family: var(--font-mono); font-size: 10px; color: var(--crimson); z-index: 9999; box-shadow: var(--shadow); }
+    .toast.err { border-color: var(--red); border-left-color: var(--red); color: var(--red); }
+    @media (max-width: 1000px) {
+      .g2 { grid-template-columns: 1fr; }
+      .team-row, .team-row-hdr { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="hdr">
+    <div class="hdr-title">ARES COMMAND — Teacher Control</div>
+    <div class="hdr-sub">Live session orchestration • Team code management • Class overview</div>
+  </div>
+
+  <div class="main">
+    <div class="g2">
+      <div class="panel">
+        <div class="ph"><div class="ph-title">Access & Session</div><div class="ph-badge">PIN: ARES</div></div>
+        <div class="pb">
+          <div class="row" style="margin-bottom:12px">
+            <div style="flex:1;min-width:180px">
+              <div class="inp-lbl">Teacher PIN</div>
+              <input class="inp" id="pin-input" type="password" placeholder="Enter PIN">
+            </div>
+            <div style="margin-top:20px"><button class="btn" id="unlock-btn">UNLOCK</button></div>
+            <div style="margin-top:20px"><span class="pin-status bad" id="pin-status">LOCKED</span></div>
+          </div>
+
+          <div class="row" style="margin-bottom:10px">
+            <div style="flex:1;min-width:220px">
+              <div class="inp-lbl">Session ID</div>
+              <input class="inp" id="session-id" type="text" value="lesson7" autocomplete="off">
+            </div>
+            <div style="margin-top:20px"><button class="btn-sm" id="connect-session-btn">CONNECT</button></div>
+            <div style="margin-top:20px"><a href="./student.html" class="btn-sm" id="student-link" style="display:inline-block;text-decoration:none">OPEN STUDENT PAGE</a></div>
+          </div>
+
+          <div class="row" style="margin-bottom:10px">
+            <button class="btn" id="start-session-btn" disabled>START SIMULATION</button>
+            <button class="btn-sm" id="finish-session-btn" disabled>FINISH</button>
+            <button class="btn-sm" id="reset-session-btn" disabled style="color:var(--red);border-color:var(--red)">RESET</button>
+            <span id="session-status-chip" class="status-chip lock">LOCKED</span>
+          </div>
+          <div id="session-note" class="note">Connect to a session and unlock teacher controls.</div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="ph"><div class="ph-title">Class Overview — Live Submissions</div><div class="ph-badge">RTDB LATEST</div></div>
+        <div class="pb" id="class-overview-wrap" style="overflow:auto">
+          <div class="note">No submissions yet — waiting for teams</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel" style="margin-top:16px">
+      <div class="ph"><div class="ph-title">Team Management</div><div class="ph-badge">JOIN CODES</div></div>
+      <div class="pb">
+        <div class="team-row-hdr">
+          <div>Team ID</div>
+          <div>Budget</div>
+          <div>Join Code</div>
+          <div>Save</div>
+          <div>Remove</div>
+        </div>
+        <div id="team-rows"></div>
+        <div class="row" style="margin-top:10px">
+          <button class="btn-sm" id="add-team-row-btn">+ Add Team</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="./shared-sim.js"></script>
+  <script src="./firebase.config.js"></script>
+  <script type="module" src="./teacher-app.js"></script>
+</body>
+</html>
