@@ -91,6 +91,8 @@ let teamStateLoaded = false;
 let unsubs = [];
 let solTick = null;
 let lastTrajectoryCharts = [];
+let authReady = false;
+let authReadyPromise = Promise.resolve();
 
 const STORAGE_KEY = 'ares_student_team_context_v1';
 
@@ -102,6 +104,21 @@ function formatFirebaseError(err, fallback) {
   const code = err?.code ? ` (${err.code})` : '';
   const msg = err?.message ? ` ${err.message}` : '';
   return `${fallback}${code}${msg}`;
+}
+
+function withTimeout(promise, ms, timeoutMessage) {
+  return new Promise((resolve, reject) => {
+    const t = setTimeout(() => reject(new Error(timeoutMessage)), ms);
+    promise
+      .then((v) => {
+        clearTimeout(t);
+        resolve(v);
+      })
+      .catch((e) => {
+        clearTimeout(t);
+        reject(e);
+      });
+  });
 }
 
 function parseJoinCode(raw) {
@@ -817,7 +834,18 @@ async function studentJoinTeam(code) {
   setLockState('Checking join code...', false);
 
   try {
-    const joinSnap = await get(ref(db, `joinCodes/${joinCode}`));
+    await authReadyPromise.catch(() => null);
+
+    if (!authReady) {
+      setLockState('Authentication is not ready. Enable Anonymous sign-in and refresh.', true);
+      return;
+    }
+
+    const joinSnap = await withTimeout(
+      get(ref(db, `joinCodes/${joinCode}`)),
+      12000,
+      'Timed out while checking join code.'
+    );
     if (!joinSnap.exists()) {
       setLockState('Join code not found. Check with your teacher.', true);
       return;
@@ -845,7 +873,10 @@ async function studentJoinTeam(code) {
     await attachRealtimeListeners();
     showToast('Team session connected');
   } catch (err) {
-    setLockState(formatFirebaseError(err, 'Failed to join session.'), true);
+    const hint = err?.message === 'Timed out while checking join code.'
+      ? 'Failed to join session. Check databaseURL and Realtime Database connectivity.'
+      : 'Failed to join session.';
+    setLockState(formatFirebaseError(err, hint), true);
   }
 }
 
@@ -981,7 +1012,9 @@ async function ensureSignedIn() {
   if (invalidConfig) return;
   try {
     await signInAnonymously(auth);
+    authReady = true;
   } catch (err) {
+    authReady = false;
     setLockState(formatFirebaseError(err, 'Anonymous auth failed. Enable Anonymous sign-in in Firebase Authentication.'), true);
   }
 }
@@ -1002,7 +1035,8 @@ function init() {
   if (solTick) clearInterval(solTick);
   solTick = setInterval(syncSolDisplayFromSessionState, 1000);
 
-  ensureSignedIn().then(() => {
+  authReadyPromise = ensureSignedIn();
+  authReadyPromise.then(() => {
     restoreSessionIfAny();
   });
 }
