@@ -661,15 +661,6 @@ async function submitProposalSynced() {
       return;
     }
 
-    await addDoc(
-      collection(fs, `sessionSubmissions/${teamCtx.sessionId}/teams/${teamCtx.teamId}/submissions`),
-      {
-        ...payload,
-        submittedAt: fsServerTimestamp(),
-        clientVersion: 'student-web-v1'
-      }
-    );
-
     const missionStatus = getMissionStatus(result);
     await writeLatestSnapshotWithRetry(ref(db, `sessions/${teamCtx.sessionId}/latest/${teamCtx.teamId}`), {
       round: submitRound,
@@ -681,6 +672,15 @@ async function submitProposalSynced() {
       teamId: teamCtx.teamId,
       updatedAt: Date.now()
     }, 3);
+
+    const historyWritePromise = addDoc(
+      collection(fs, `sessionSubmissions/${teamCtx.sessionId}/teams/${teamCtx.teamId}/submissions`),
+      {
+        ...payload,
+        submittedAt: fsServerTimestamp(),
+        clientVersion: 'student-web-v1'
+      }
+    );
 
     const chartId = `traj-chart-${Date.now()}`;
     const html = buildFeedback(result, submitRound, teamCtx.teamId, S.habitation, chartId);
@@ -704,6 +704,12 @@ async function submitProposalSynced() {
     showSec('feedback');
     showToast(`PROPOSAL V${submitRound} SUBMITTED`);
     initTrajectoryChart(chartId, result);
+
+    try {
+      await historyWritePromise;
+    } catch (historyErr) {
+      showToast(formatFirebaseError(historyErr, 'Live submit synced, but history write failed.'), 'err');
+    }
   } catch (err) {
     showToast(formatFirebaseError(err, 'Network or sync error while submitting. Please retry.'), 'err');
   }
