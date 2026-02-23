@@ -14,12 +14,24 @@ import {
   addDoc,
   serverTimestamp as fsServerTimestamp
 } from 'https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js';
+import {
+  getAuth,
+  signInAnonymously
+} from 'https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js';
 
 const cfg = window.FIREBASE_CONFIG || {};
-const invalidConfig = !cfg.apiKey || cfg.projectId === 'REPLACE_ME' || cfg.databaseURL?.includes('REPLACE_ME');
+const invalidConfig =
+  !cfg.apiKey ||
+  !cfg.authDomain ||
+  !cfg.projectId ||
+  !cfg.appId ||
+  !cfg.databaseURL ||
+  cfg.projectId === 'REPLACE_ME' ||
+  cfg.databaseURL.includes('REPLACE_ME');
 const app = initializeApp(cfg);
 const db = getDatabase(app);
 const fs = getFirestore(app);
+const auth = getAuth(app);
 
 const { THRESH } = window.MarsSim;
 const TEACHER_PIN = 'ARES';
@@ -34,6 +46,12 @@ let manualRows = [];
 
 function byId(id) {
   return document.getElementById(id);
+}
+
+function formatFirebaseError(err, fallback) {
+  const code = err?.code ? ` (${err.code})` : '';
+  const msg = err?.message ? ` ${err.message}` : '';
+  return `${fallback}${code}${msg}`;
 }
 
 function showToast(msg, type) {
@@ -234,7 +252,7 @@ async function teacherUpsertTeam(teamId, budgetMu, joinCode, originalTeamId) {
     manualRows = manualRows.filter((r) => String(r.teamId || '').toUpperCase() !== normalizedTeamId);
     showToast(`Team ${normalizedTeamId} saved`);
   } catch (_err) {
-    showToast('Failed to save team', 'err');
+    showToast(formatFirebaseError(_err, 'Failed to save team'), 'err');
   }
 }
 
@@ -255,7 +273,7 @@ async function teacherRemoveTeam(teamId) {
     manualRows = manualRows.filter((r) => String(r.teamId || '').toUpperCase() !== tid);
     showToast(`Team ${tid} removed`);
   } catch (_err) {
-    showToast('Failed to remove team', 'err');
+    showToast(formatFirebaseError(_err, 'Failed to remove team'), 'err');
   }
 }
 
@@ -274,8 +292,8 @@ async function teacherStartSession() {
       updatedAt: serverTimestamp()
     });
     showToast('Simulation started');
-  } catch (_err) {
-    showToast('Failed to start simulation', 'err');
+  } catch (err) {
+    showToast(formatFirebaseError(err, 'Failed to start simulation'), 'err');
   }
 }
 
@@ -292,8 +310,8 @@ async function teacherFinishSession() {
       updatedAt: serverTimestamp()
     });
     showToast('Simulation finished (students hard-locked)');
-  } catch (_err) {
-    showToast('Failed to finish simulation', 'err');
+  } catch (err) {
+    showToast(formatFirebaseError(err, 'Failed to finish simulation'), 'err');
   }
 }
 
@@ -334,8 +352,8 @@ async function teacherResetSession() {
     });
 
     showToast('Session reset complete');
-  } catch (_err) {
-    showToast('Failed to reset session', 'err');
+  } catch (err) {
+    showToast(formatFirebaseError(err, 'Failed to reset session'), 'err');
   }
 }
 
@@ -344,15 +362,21 @@ function bindSessionListeners() {
   unsubs.push(onValue(ref(db, `sessions/${sessionId}`), (snap) => {
     sessionData = snap.val() || null;
     updateSessionUi();
+  }, (error) => {
+    showToast(formatFirebaseError(error, 'Failed to read session state'), 'err');
   }));
   unsubs.push(onValue(ref(db, `sessions/${sessionId}/teams`), (snap) => {
     teamsData = snap.val() || {};
     renderTeamRows();
     updateSessionUi();
+  }, (error) => {
+    showToast(formatFirebaseError(error, 'Failed to read teams'), 'err');
   }));
   unsubs.push(onValue(ref(db, `sessions/${sessionId}/latest`), (snap) => {
     latestData = snap.val() || {};
     renderClassOverviewFromLatest();
+  }, (error) => {
+    showToast(formatFirebaseError(error, 'Failed to read class overview'), 'err');
   }));
 }
 
@@ -390,13 +414,24 @@ function bindEvents() {
   });
 }
 
+async function ensureSignedIn() {
+  if (invalidConfig) return;
+  try {
+    await signInAnonymously(auth);
+  } catch (err) {
+    showToast(formatFirebaseError(err, 'Anonymous auth failed. Enable Anonymous sign-in in Firebase Authentication.'), 'err');
+  }
+}
+
 function init() {
   if (invalidConfig) {
     byId('session-note').textContent = 'Firebase config is incomplete. Fill firebase.config.js before running.';
   }
   bindEvents();
-  connectSession();
-  updateSessionUi();
+  ensureSignedIn().then(() => {
+    connectSession();
+    updateSessionUi();
+  });
 }
 
 window.teacherStartSession = teacherStartSession;

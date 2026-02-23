@@ -39,6 +39,7 @@ GitHub Pages only hosts files. It does **not** apply Firebase rules.
 You must configure Firebase project resources separately:
 - Realtime Database enabled
 - Firestore enabled
+- Authentication enabled with **Anonymous** sign-in provider
 - Rules configured in Firebase Console (or via Firebase CLI)
 
 If your API key has HTTP referrer restrictions, allow your Pages origin:

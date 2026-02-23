@@ -15,6 +15,7 @@ Edit `.firebaserc` and replace `REPLACE_ME` with your Firebase project id.
 ## 3) Enable products in Firebase console
 - Realtime Database (start in test mode for classroom trust setup)
 - Firestore Database (test mode for classroom trust setup)
+- Authentication -> Sign-in method -> **Anonymous** (enable)
 - Firebase Hosting (optional; not required for GitHub Pages)
 
 ## 4) If you deploy with Firebase Hosting (optional)

@@ -15,12 +15,24 @@ import {
   getDocs,
   serverTimestamp as fsServerTimestamp
 } from 'https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js';
+import {
+  getAuth,
+  signInAnonymously
+} from 'https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js';
 
 const cfg = window.FIREBASE_CONFIG || {};
-const invalidConfig = !cfg.apiKey || cfg.projectId === 'REPLACE_ME' || cfg.databaseURL?.includes('REPLACE_ME');
+const invalidConfig =
+  !cfg.apiKey ||
+  !cfg.authDomain ||
+  !cfg.projectId ||
+  !cfg.appId ||
+  !cfg.databaseURL ||
+  cfg.projectId === 'REPLACE_ME' ||
+  cfg.databaseURL.includes('REPLACE_ME');
 const app = initializeApp(cfg);
 const db = getDatabase(app);
 const fs = getFirestore(app);
+const auth = getAuth(app);
 
 const {
   ITEMS,
@@ -75,6 +87,7 @@ let S = { selected: [], budget: 12, round: 1, locked: [], habitation: null, subm
 let teamCtx = null;
 let sessionState = null;
 let teamState = null;
+let teamStateLoaded = false;
 let unsubs = [];
 let solTick = null;
 let lastTrajectoryCharts = [];
@@ -83,6 +96,12 @@ const STORAGE_KEY = 'ares_student_team_context_v1';
 
 function byId(id) {
   return document.getElementById(id);
+}
+
+function formatFirebaseError(err, fallback) {
+  const code = err?.code ? ` (${err.code})` : '';
+  const msg = err?.message ? ` ${err.message}` : '';
+  return `${fallback}${code}${msg}`;
 }
 
 function parseJoinCode(raw) {
@@ -590,7 +609,7 @@ async function submitProposalSynced() {
     showToast(`PROPOSAL V${submitRound} SUBMITTED`);
     initTrajectoryChart(chartId, result);
   } catch (err) {
-    showToast('Network or sync error while submitting. Please retry.', 'err');
+    showToast(formatFirebaseError(err, 'Network or sync error while submitting. Please retry.'), 'err');
   }
 }
 
@@ -696,6 +715,7 @@ async function hydrateTeamStateFromFirestore() {
 }
 
 function applyTeamNode(team) {
+  teamStateLoaded = true;
   teamState = team || null;
   if (!teamState) {
     setLockState('Team was removed by teacher. Please contact your teacher for a new code.', true);
@@ -733,6 +753,11 @@ function applySessionNode(session) {
     return;
   }
 
+  if (!teamStateLoaded) {
+    setLockState('Connecting team configuration...', false);
+    return;
+  }
+
   if (!teamState || !teamState.active) {
     setLockState('Team access is not active. Please contact your teacher.', true);
     return;
@@ -758,11 +783,20 @@ function applySessionNode(session) {
 
 async function attachRealtimeListeners() {
   clearRealtimeListeners();
+  teamStateLoaded = false;
   const sessionRef = ref(db, `sessions/${teamCtx.sessionId}`);
   const teamRef = ref(db, `sessions/${teamCtx.sessionId}/teams/${teamCtx.teamId}`);
 
-  unsubs.push(onValue(sessionRef, (snap) => applySessionNode(snap.val())));
-  unsubs.push(onValue(teamRef, (snap) => applyTeamNode(snap.val())));
+  unsubs.push(onValue(
+    sessionRef,
+    (snap) => applySessionNode(snap.val()),
+    (error) => setLockState(formatFirebaseError(error, 'Session listener failed.'), true)
+  ));
+  unsubs.push(onValue(
+    teamRef,
+    (snap) => applyTeamNode(snap.val()),
+    (error) => setLockState(formatFirebaseError(error, 'Team listener failed.'), true)
+  ));
 
   await hydrateTeamStateFromFirestore();
   renderComparison();
@@ -790,6 +824,15 @@ async function studentJoinTeam(code) {
     }
 
     const joinData = joinSnap.val();
+    if (joinData && joinData.active === false) {
+      setLockState('Join code is inactive. Ask your teacher for a new code.', true);
+      return;
+    }
+    if (!joinData?.sessionId || !joinData?.teamId) {
+      setLockState('Join code record is invalid. Ask your teacher to re-save the team code.', true);
+      return;
+    }
+
     teamCtx = {
       joinCode,
       sessionId: joinData.sessionId,
@@ -801,8 +844,8 @@ async function studentJoinTeam(code) {
     updateIdentityUI();
     await attachRealtimeListeners();
     showToast('Team session connected');
-  } catch (_err) {
-    setLockState('Failed to join session. Check network and retry.', true);
+  } catch (err) {
+    setLockState(formatFirebaseError(err, 'Failed to join session.'), true);
   }
 }
 
@@ -934,6 +977,15 @@ async function restoreSessionIfAny() {
   }
 }
 
+async function ensureSignedIn() {
+  if (invalidConfig) return;
+  try {
+    await signInAnonymously(auth);
+  } catch (err) {
+    setLockState(formatFirebaseError(err, 'Anonymous auth failed. Enable Anonymous sign-in in Firebase Authentication.'), true);
+  }
+}
+
 function init() {
   renderEquipment();
   renderSlots();
@@ -950,7 +1002,9 @@ function init() {
   if (solTick) clearInterval(solTick);
   solTick = setInterval(syncSolDisplayFromSessionState, 1000);
 
-  restoreSessionIfAny();
+  ensureSignedIn().then(() => {
+    restoreSessionIfAny();
+  });
 }
 
 window.showSec = showSec;
